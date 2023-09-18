@@ -1,0 +1,587 @@
+
+<script>
+import * as XLSX from 'xlsx';
+import axios from 'axios'
+import * as Swal from 'sweetalert2'
+export default {
+  data() {
+    return {
+      form: {
+        formName: "Auto Fill Data",
+
+        style: ""
+      },
+      list: [],
+      submitable: true,
+      sheet: "Demand",
+      showSubmitFeedback: false
+    }
+  },
+  methods: {
+    async getSize(style, color, size, SizeDesc) {
+      let data = `Style_Cd=${style}&Color_Cd=${color}&Attribute_Cd=------&Size_Cd=${size}`
+
+      let config = {
+        method: 'post',
+        maxBodyLength: Infinity,
+        url: 'http://wsscplanprd05/ISS/Order/GetSkuSizes',
+        headers: {
+          'Accept': '*/*',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Connection': 'keep-alive',
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          'Cookie': 'menustate=false',
+          'Referer': 'http://wsscplanprd05/ISS/Order/WOManagement',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        data: data
+      };
+
+      try {
+        var response = await axios.request(config);
+        response.data.forEach(value => {
+          if (value["SizeDesc"] == SizeDesc) {
+            return value["SizeDesc"];
+          }
+        })
+
+      } catch (e) {
+
+      }
+      return "";
+
+    },
+    convertDate(dateStr) {
+      if (dateStr == null || dateStr.length == 0) {
+        return dateStr;
+      }
+      const milliseconds = parseInt(dateStr.match(/\/Date\((\d+)\)\//)[1]);
+      const date = new Date(milliseconds);
+      return date.toISOString();
+    },
+    async fakeSubmit() {
+      console.log("on search");
+      const xlsxfile = this.$refs.file.files[0];
+
+      if (this.form.style.length == 0) {
+        Swal.fire(
+          'The Style?',
+          'Please style code!',
+          'question'
+        );
+        return;
+      }
+
+      if (xlsxfile == null) {
+        Swal.fire(
+          'The XLSX file?',
+          'Please xlsx file!',
+          'question'
+        );
+        return;
+      }
+
+      try {
+        var workbook = XLSX.read(await xlsxfile.arrayBuffer(), { type: 'binary' });
+        var ws = workbook.Sheets[this.sheet];
+      } catch (e) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Oops...',
+          text: 'Something went wrong!' + e.message,
+          footer: '<a href="">Why do I have this issue?</a>'
+        })
+        return;
+      }
+
+      this.list = [];
+      var range = XLSX.utils.decode_range(ws['!ref']);
+
+      for (var i = 0; i < range.e.r; i++) {
+        if (ws["D" + i] != null && ws["D" + i].v == this.form.style) {
+          if (ws["Q" + i] != null && ws["Q" + i].v != null) {
+            var q = "" + ws["Q" + i].v;
+
+            if (q.indexOf("+") > 0) {
+              q.split("+").forEach(e => {
+                if (!isNaN(e)) {
+                  this.list.push({
+                    "style": ws["D" + i].v,
+                    "color": ws["E" + i].v,
+                    "size": ws["G" + i].v,
+                    "quatity": +e,
+                  })
+                }
+
+              });
+            } else {
+              this.list.push({
+                "style": ws["D" + i].v,
+                "color": ws["E" + i].v,
+                "size": ws["G" + i].v,
+                "quatity": +q,
+              })
+            }
+
+          }
+
+        }
+      }
+      if (this.list.length == 0) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Oops...',
+          text: 'No data found for style ' + this.form.style + ' !',
+          footer: '<a href="">Why do I have this issue?</a>'
+        });
+        return;
+      }
+
+
+      this.submitable = true;
+      this.showSubmitFeedback = true;
+
+
+    },
+    async filldata(searchData, list) {
+      var lockedItem = [];
+
+      for (var i = 0; i < searchData["Total"]; i++) {
+
+        if (searchData["Data"][i]["OrderStatusDesc"] == "Locked") {
+          lockedItem.push(searchData["Data"][i]);
+        }
+      }
+
+
+      if (lockedItem.length < list.length) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Oops...',
+          text: 'Not enough locked item for style ' + this.form.style + ' !',
+          footer: '<a href="">Why do I have this issue?</a>'
+        });
+        return;
+      } else {
+        var editedItem = [];
+        for (var i = 0; i < list.length; i++) {
+
+          try {
+            const Size = this.getSize(lockedItem[i].Style, list[i].color, lockedItem[i]["Size"], list[i].size)
+
+            lockedItem[i]["CurrDueDate"] = this.convertDate(lockedItem[i]["CurrDueDate"]);
+            lockedItem[i]["CCurrDueDate"] = this.convertDate(lockedItem[i]["CCurrDueDate"]);
+            lockedItem[i]["StartDate"] = this.convertDate(lockedItem[i]["StartDate"]);
+            lockedItem[i]["CStartDate"] = this.convertDate(lockedItem[i]["CStartDate"]);
+            lockedItem[i]["EarliestStartDate"] = this.convertDate(lockedItem[i]["EarliestStartDate"]);
+            lockedItem[i]["DemandDate"] = this.convertDate(lockedItem[i]["DemandDate"]);
+            var Cloned = JSON.parse(JSON.stringify(lockedItem[i]));
+            Cloned["idField"] = "Id";
+            Cloned["_defaultId"] = 0;
+            lockedItem[i]["IsEdited"] = true;
+            lockedItem[i]["Cloned"] = Cloned;
+            lockedItem[i]["IsFieldChange"] = true;
+            lockedItem[i]["Completed"] = false;
+            lockedItem[i]["TotalDozens"] = list[i].quatity;
+            lockedItem[i]["SizeShortDes"] = list[i].size;
+            lockedItem[i]["Size"] = Size;
+            lockedItem[i]["Color"] = list[i].color;
+            editedItem.push(lockedItem[i]);
+          } catch (e) {
+
+            return;
+          }
+
+
+
+        }
+        console.log(editedItem);
+
+
+        let config = {
+          method: 'post',
+          headers: {
+            'Accept': 'application/json, text/javascript, */*; q=0.01',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Connection': 'keep-alive',
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Cookie': 'menustate=false',
+            'Origin': 'http://wsisswebprod1v',
+            'Referer': 'http://wsisswebprod1v/ISS/Order/WOManagement',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        };
+        try {
+          for (var i = 0; i < editedItem.length; i++) {
+            await axios.post('http://wsisswebprod1v/ISS/Order/SaveWOMdata', {
+              "data": [editedItem[i]],
+              "mode": "Recalc"
+            }, config);
+          }
+
+
+          Swal.fire({
+            position: 'top-end',
+            icon: 'success',
+            title: 'Your work has been saved',
+            showConfirmButton: false,
+            timer: 1500
+          }).then(e => {
+            this.form.style = "";
+            this.list = [];
+            this.showSubmitFeedback = false;
+            this.submitable = true;
+          })
+        } catch (error) {
+          // Handle errors
+          Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            footer: '<a href="">Why do I have this issue?</a>'
+          }).then(e => {
+            this.submitable = true;
+          });
+        }
+
+
+
+      }
+
+    },
+    async submit() {
+
+
+      Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: "Yes, I'm sure!"
+      }).then((result) => {
+        if (result.isConfirmed) {
+
+          this.submitable = false;
+          let data = 'sort=&group=&filter=&SuperOrder=&StyleType=Selling+Style&SStyle=' + this.form.style + '&SColor=&SAttribute=&SSize=&DC=&Rev=&MfgPathId=95&Rule=&GroupId=&MFGPlant=&CylinderSize=&DyeBle=&TextileGroup=&Alt=&Machine=&Yarn=&DueDate=Earliest+Start&Week_input=Current+%2B+Prior+Week&Week=Current+%2B+Prior+Week&MoreWeeks_input=52&MoreWeeks=52&BOMMismatches=false&Fabric=&SuggestedLots=true&SpillOver=true&LockedLots=true&ReleasedLotsThisWeek=true&CustomerOrders=true&Events=true&MaxBuild=true&TILs=true&Forecast=false&StockTarget=true&Planner=&WorkCenter=&CapacityGroup=&CorpDiv=&BusinessUnit=&Src=A';
+
+          let config = {
+            method: 'post',
+            url: 'http://wsisswebprod1v/ISS/Order/WOManagement',
+            headers: {
+              'Accept': '*/*',
+              'Accept-Language': 'en-US,en;q=0.9',
+              'Connection': 'keep-alive',
+              'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+              'Cookie': 'menustate=false',
+              'Origin': 'http://wsisswebprod1v',
+              'Referer': 'http://wsisswebprod1v/ISS/Order/WOManagement',
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
+              'X-Requested-With': 'XMLHttpRequest',
+              'Access-Control-Allow-Origin': '*'
+            },
+            data: data
+          };
+
+          axios.request(config)
+            .then((response) => {
+              this.filldata(response.data, this.list);
+            })
+            .catch((error) => {
+              Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: error.message,
+                footer: '<a href="">Why do I have this issue?</a>'
+              });
+            });
+
+        }
+      })
+
+
+
+
+    }
+  }
+}
+</script>
+
+<template>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <h1 class="title is-1" v-text="form.formName"></h1>
+  <section id="app">
+
+
+    <div class="columns">
+      <div class="column">
+        <form class="example">
+          <div class="row">
+            <label for="style_code" class="label">Style Code</label>
+            <div class="control">
+              <input id="style_code" class="input" type="text" v-model="form.style" />
+            </div>
+          </div>
+
+          <div class="row">
+            <label for="xlsx_file" class="label">Excel file</label>
+            <div class="control">
+              <input id="xlsx_file" type="file" ref="file">
+            </div>
+          </div>
+
+          <button type="submit" @click.prevent="fakeSubmit"><i class="fa fa-search">Search</i></button>
+
+        </form>
+
+
+        <transition name="fade" mode="out-in" v-show="showSubmitFeedback">
+          <div class="column">
+            <button type="button" class="button1" v-show="submitable" v-on:click="submit">Fill Data</button>
+            <table class="styled-table">
+              <thead>
+                <tr>
+                  <th class="text-left">
+                    Style
+                  </th>
+                  <th class="text-left">
+                    Color
+                  </th>
+                  <th class="text-left">
+                    Size
+                  </th>
+                  <th class="text-left">
+                    Quatity
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="active-row" v-for="item in list">
+                  <td>{{ item.style }}</td>
+                  <td>{{ item.color }}</td>
+                  <td>{{ item.size }}</td>
+                  <td>{{ item.quatity }}</td>
+                </tr>
+              </tbody>
+            </table>
+
+
+          </div>
+        </transition>
+      </div>
+
+    </div>
+
+
+
+  </section>
+</template>
+
+<style scoped>
+.margin-bottom {
+  margin-bottom: 15px;
+}
+
+.fade-enter,
+.fade-leave-active {
+  opacity: 0;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity .5s;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Style the search field */
+form.example input[type=text] {
+  padding: 10px;
+  font-size: 17px;
+  border: 1px solid grey;
+  float: left;
+  width: 100%;
+  background: #f1f1f1;
+}
+
+/* Style the submit button */
+form.example button {
+  float: left;
+  width: 20%;
+  padding: 10px;
+  width: 100%;
+  margin-top: 10px;
+  background: #2196F3;
+  color: white;
+  font-size: 17px;
+  border: 1px solid grey;
+  border-left: none;
+  /* Prevent double borders */
+  cursor: pointer;
+}
+
+form.example button:hover {
+  background: #0b7dda;
+}
+
+/* Clear floats */
+form.example::after {
+  content: "";
+  clear: both;
+  display: table;
+}
+
+.button1 {
+  display: inline-block;
+  padding: 15px 25px;
+  margin-top: 30px;
+  font-size: 24px;
+  width: 100%;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  outline: none;
+  color: #fff;
+  background-color: #4CAF50;
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 9px #999;
+}
+
+.button1:hover {
+  background-color: #3e8e41
+}
+
+.button1:active {
+  background-color: #3e8e41;
+  box-shadow: 0 5px #666;
+  transform: translateY(4px);
+}
+
+
+
+.styled-table {
+  border-collapse: collapse;
+  margin: 25px 0;
+  font-size: 0.9em;
+  font-family: sans-serif;
+  min-width: 400px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+.styled-table thead tr {
+  background-color: #009879;
+  color: #ffffff;
+  text-align: left;
+}
+
+.styled-table th,
+.styled-table td {
+  padding: 12px 15px;
+}
+
+
+.styled-table tbody tr {
+  border-bottom: 1px solid #dddddd;
+}
+
+.styled-table tbody tr:nth-of-type(even) {
+  background-color: #f3f3f3;
+}
+
+.styled-table tbody tr:last-of-type {
+  border-bottom: 2px solid #009879;
+}
+
+.styled-table tbody tr.active-row {
+  font-weight: bold;
+  color: #009879;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+input[type=text],
+select,
+textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: vertical;
+}
+
+label {
+  padding: 12px 12px 12px 0;
+  display: inline-block;
+}
+
+input[type=submit] {
+  background-color: #04AA6D;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  float: right;
+}
+
+input[type=submit]:hover {
+  background-color: #45a049;
+}
+
+.container {
+  border-radius: 5px;
+  background-color: #f2f2f2;
+  padding: 20px;
+}
+
+.col-25 {
+  float: left;
+  width: 25%;
+  margin-top: 6px;
+}
+
+.col-75 {
+  float: left;
+  width: 75%;
+  margin-top: 6px;
+}
+
+/* Clear floats after the columns */
+.row::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+/* Responsive layout - when the screen is less than 600px wide, make the two columns stack on top of each other instead of next to each other */
+@media screen and (max-width: 600px) {
+
+  .col-25,
+  .col-75,
+  input[type=submit] {
+    width: 100%;
+    margin-top: 0;
+  }
+}
+
+input[type=file]::file-selector-button {
+  border: 2px solid #5c6ae7;
+  padding: 12px;
+  border: 12px;
+  border-radius: 4px;
+  background-color: #a29bfe;
+  transition: 1s;
+}
+
+input[type=file]::file-selector-button:hover {
+  background-color: #81ecec;
+  border: 2px solid #00cec9;
+}
+</style>
