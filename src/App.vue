@@ -1,8 +1,11 @@
 
 <script>
+
 import * as XLSX from 'xlsx';
 import axios from 'axios'
 import * as Swal from 'sweetalert2'
+import Loading from 'vue-loading-overlay';
+import 'vue-loading-overlay/dist/css/index.css';
 export default {
   data() {
     return {
@@ -12,10 +15,15 @@ export default {
         style: ""
       },
       list: [],
+      listFail: [],
       submitable: true,
+      isLoading: false,
       sheet: "Demand",
       showSubmitFeedback: false
     }
+  },
+  components: {
+    Loading
   },
   methods: {
     async getSize(style, color, size, SizeDesc) {
@@ -40,11 +48,13 @@ export default {
 
       try {
         var response = await axios.request(config);
-        response.data.forEach(value => {
-          if (value["SizeDesc"] == SizeDesc) {
-            return value["SizeDesc"];
+        console.log(response);
+        for (var i = 0; i < response.data.length; i++) {
+          console.log(response.data[i]["SizeDesc"], response.data[i]["Size"], SizeDesc);
+          if (response.data[i]["SizeDesc"] == SizeDesc) {
+            return response.data[i]["Size"];
           }
-        })
+        }
 
       } catch (e) {
 
@@ -96,6 +106,7 @@ export default {
       }
 
       this.list = [];
+      this.loading = true;
       var range = XLSX.utils.decode_range(ws['!ref']);
 
       for (var i = 0; i < range.e.r; i++) {
@@ -105,29 +116,56 @@ export default {
 
             if (q.indexOf("+") > 0) {
               q.split("+").forEach(e => {
-                if (!isNaN(e)) {
-                  this.list.push({
-                    "style": ws["D" + i].v,
-                    "color": ws["E" + i].v,
-                    "size": ws["G" + i].v,
-                    "quatity": +e,
-                  })
+                if (!isNaN(e) || e.indexOf("*") > 0) {
+                  console.log(e);
+                  console.log(e.split("*"));
+                  if (e.indexOf("*") > 0) {
+                    const multi = e.split("*");
+                    for (var j = 0; j < +multi[1]; j++) {
+                      this.list.push({
+                        "style": ws["D" + i].v,
+                        "color": ws["E" + i].v,
+                        "size": ws["G" + i].v,
+                        "quatity": +multi[0],
+                      });
+                    }
+                  } else {
+                    this.list.push({
+                      "style": ws["D" + i].v,
+                      "color": ws["E" + i].v,
+                      "size": ws["G" + i].v,
+                      "quatity": +e,
+                    });
+                  }
                 }
 
               });
             } else {
-              this.list.push({
-                "style": ws["D" + i].v,
-                "color": ws["E" + i].v,
-                "size": ws["G" + i].v,
-                "quatity": +q,
-              })
+              if (q.indexOf("*") > 0) {
+                const multi = q.split("*");
+                for (var j = 0; j < +multi[1]; j++) {
+                  this.list.push({
+                    "style": ws["D" + i].v,
+                    "color": ws["E" + i].v,
+                    "size": ws["G" + i].v,
+                    "quatity": +multi[0],
+                  });
+                }
+              } else {
+                this.list.push({
+                  "style": ws["D" + i].v,
+                  "color": ws["E" + i].v,
+                  "size": ws["G" + i].v,
+                  "quatity": +q,
+                });
+              }
             }
 
           }
 
         }
       }
+      this.loading = false;
       if (this.list.length == 0) {
         Swal.fire({
           icon: 'error',
@@ -168,17 +206,31 @@ export default {
         for (var i = 0; i < list.length; i++) {
 
           try {
-            const Size = this.getSize(lockedItem[i].Style, list[i].color, lockedItem[i]["Size"], list[i].size)
+            const Size = await this.getSize(lockedItem[i].Style, list[i].color, lockedItem[i]["Size"], list[i].size)
 
             lockedItem[i]["CurrDueDate"] = this.convertDate(lockedItem[i]["CurrDueDate"]);
             lockedItem[i]["CCurrDueDate"] = this.convertDate(lockedItem[i]["CCurrDueDate"]);
+
             lockedItem[i]["StartDate"] = this.convertDate(lockedItem[i]["StartDate"]);
             lockedItem[i]["CStartDate"] = this.convertDate(lockedItem[i]["CStartDate"]);
+
             lockedItem[i]["EarliestStartDate"] = this.convertDate(lockedItem[i]["EarliestStartDate"]);
             lockedItem[i]["DemandDate"] = this.convertDate(lockedItem[i]["DemandDate"]);
             var Cloned = JSON.parse(JSON.stringify(lockedItem[i]));
+
+
+
             Cloned["idField"] = "Id";
             Cloned["_defaultId"] = 0;
+
+            if (lockedItem[i]["CCurrDueDate"] == null) {
+              lockedItem[i]["CCurrDueDate"] = lockedItem[i]["CurrDueDate"]
+            }
+
+            if (lockedItem[i]["CStartDate"] == null) {
+              lockedItem[i]["CStartDate"] = lockedItem[i]["StartDate"]
+            }
+
             lockedItem[i]["IsEdited"] = true;
             lockedItem[i]["Cloned"] = Cloned;
             lockedItem[i]["IsFieldChange"] = true;
@@ -187,7 +239,10 @@ export default {
             lockedItem[i]["SizeShortDes"] = list[i].size;
             lockedItem[i]["Size"] = Size;
             lockedItem[i]["Color"] = list[i].color;
-            editedItem.push(lockedItem[i]);
+            editedItem.push({
+              item: lockedItem[i],
+              origin: list[i],
+            });
           } catch (e) {
 
             return;
@@ -213,12 +268,16 @@ export default {
             'X-Requested-With': 'XMLHttpRequest'
           }
         };
+        this.listFail = [];
         try {
           for (var i = 0; i < editedItem.length; i++) {
-            await axios.post('http://wsisswebprod1v/ISS/Order/SaveWOMdata', {
-              "data": [editedItem[i]],
+            var res, err = await axios.post('http://wsisswebprod1v/ISS/Order/SaveWOMdata', {
+              "data": [editedItem[i].item],
               "mode": "Recalc"
             }, config);
+            if (res.data.status == false) {
+              this.listFail.push(editedItem[i].origin);
+            }
           }
 
 
@@ -284,12 +343,15 @@ export default {
             },
             data: data
           };
+          this.loading = true;
 
           axios.request(config)
-            .then((response) => {
-              this.filldata(response.data, this.list);
+            .then(async (response) => {
+              await this.filldata(response.data, this.list);
+              this.loading = false;
             })
             .catch((error) => {
+              this.loading = false;
               Swal.fire({
                 icon: 'error',
                 title: 'Oops...',
@@ -310,73 +372,101 @@ export default {
 </script>
 
 <template>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <header>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="https://unpkg.com/nprogress@0.2.0/nprogress.css" rel="stylesheet" />
+  </header>
+
   <h1 class="title is-1" v-text="form.formName"></h1>
-  <section id="app">
 
 
-    <div class="columns">
-      <div class="column">
-        <form class="example">
-          <div class="row">
-            <label for="style_code" class="label">Style Code</label>
-            <div class="control">
-              <input id="style_code" class="input" type="text" v-model="form.style" />
-            </div>
-          </div>
-
-          <div class="row">
-            <label for="xlsx_file" class="label">Excel file</label>
-            <div class="control">
-              <input id="xlsx_file" type="file" ref="file">
-            </div>
-          </div>
-
-          <button type="submit" @click.prevent="fakeSubmit"><i class="fa fa-search">Search</i></button>
-
-        </form>
-
-
-        <transition name="fade" mode="out-in" v-show="showSubmitFeedback">
-          <div class="column">
-            <button type="button" class="button1" v-show="submitable" v-on:click="submit">Fill Data</button>
-            <table class="styled-table">
-              <thead>
-                <tr>
-                  <th class="text-left">
-                    Style
-                  </th>
-                  <th class="text-left">
-                    Color
-                  </th>
-                  <th class="text-left">
-                    Size
-                  </th>
-                  <th class="text-left">
-                    Quatity
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr class="active-row" v-for="item in list">
-                  <td>{{ item.style }}</td>
-                  <td>{{ item.color }}</td>
-                  <td>{{ item.size }}</td>
-                  <td>{{ item.quatity }}</td>
-                </tr>
-              </tbody>
-            </table>
-
-
-          </div>
-        </transition>
+  <div class="columns">
+    <form class="example">
+      <div class="row">
+        <label for="style_code" class="label">Style Code</label>
+        <div class="control">
+          <input id="style_code" class="input" type="text" v-model="form.style" />
+        </div>
       </div>
 
+      <div class="row">
+        <label for="xlsx_file" class="label">Excel file</label>
+        <div class="control">
+          <input id="xlsx_file" type="file" ref="file">
+        </div>
+      </div>
+
+      <button type="submit" @click.prevent="fakeSubmit"><i class="fa fa-search">Search</i></button>
+
+    </form>
+
+    <div v-show="showSubmitFeedback">
+      <b>Items was not success, need manual edit in website!!!</b>
+      <table class="styled-table2">
+        <thead>
+          <tr>
+            <th class="text-left">
+              Style
+            </th>
+            <th class="text-left">
+              Color
+            </th>
+            <th class="text-left">
+              Size
+            </th>
+            <th class="text-left">
+              Quatity
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="active-row" v-for="item in listFail">
+            <td>{{ item.style }}</td>
+            <td>{{ item.color }}</td>
+            <td>{{ item.size }}</td>
+            <td>{{ item.quatity }}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
 
+    <transition name="fade" mode="out-in" v-show="showSubmitFeedback">
+      <div class="column">
+        <button type="button" class="button1" v-show="submitable" v-on:click="submit">Fill Data</button>
+        <table class="styled-table">
+          <thead>
+            <tr>
+              <th class="text-left">
+                Style
+              </th>
+              <th class="text-left">
+                Color
+              </th>
+              <th class="text-left">
+                Size
+              </th>
+              <th class="text-left">
+                Quatity
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="active-row" v-for="item in list">
+              <td>{{ item.style }}</td>
+              <td>{{ item.color }}</td>
+              <td>{{ item.size }}</td>
+              <td>{{ item.quatity }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </transition>
+  </div>
 
-  </section>
+  <div class="vl-parent">
+    <loading v-model:active="isLoading" :can-cancel="false" :is-full-page="true" />
+  </div>
 </template>
 
 <style scoped>
@@ -472,6 +562,17 @@ form.example::after {
   min-width: 400px;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
 }
+
+.styled-table2 {
+  border-collapse: collapse;
+  margin: 25px 0;
+  font-size: 0.9em;
+  font-family: sans-serif;
+  min-width: 400px;
+  color: #7ba30b;
+  box-shadow: 0 0 20px rgba(82, 20, 20, 0.15);
+}
+
 
 .styled-table thead tr {
   background-color: #009879;
