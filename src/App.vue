@@ -72,6 +72,7 @@ export default {
     },
     async fakeSubmit() {
       console.log("on search");
+      this.listFail = [];
       const xlsxfile = this.$refs.file.files[0];
 
       if (this.form.style.length == 0) {
@@ -175,8 +176,7 @@ export default {
         });
         return;
       }
-
-
+      
       this.submitable = true;
       this.showSubmitFeedback = true;
 
@@ -400,8 +400,8 @@ export default {
 
     </form>
 
-    <div v-show="showSubmitFeedback">
-      <b>Items was not success, need manual edit in website!!!</b>
+    <div v-show="showSubmitFeedback && listFail.length > 0">
+      <b style="color: red;">Items below was not success, need manual edit in website!!!</b>
       <table class="styled-table2">
         <thead>
           <tr>
@@ -431,9 +431,13 @@ export default {
     </div>
 
 
-    <transition name="fade" mode="out-in" v-show="showSubmitFeedback">
+    <transition name="fade" mode="out-in" v-show="showSubmitFeedback && listFail.length <= 0">
       <div class="column">
+    
         <button type="button" class="button1" v-show="submitable" v-on:click="submit">Fill Data</button>
+      
+
+        <b>Total: {{ list.length }} items</b>
         <table class="styled-table">
           <thead>
             <tr>
@@ -528,7 +532,7 @@ form.example::after {
 .button1 {
   display: inline-block;
   padding: 15px 25px;
-  margin-top: 30px;
+  margin: 30px 0px 30px 0px;
   font-size: 24px;
   width: 100%;
   cursor: pointer;
@@ -569,13 +573,45 @@ form.example::after {
   font-size: 0.9em;
   font-family: sans-serif;
   min-width: 400px;
-  color: #7ba30b;
-  box-shadow: 0 0 20px rgba(82, 20, 20, 0.15);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
 }
 
 
-.styled-table thead tr {
-  background-color: #009879;
+
+
+
+.styled-table2 thead tr {
+  background-color: #981e00;
+  color: #ffffff;
+  text-align: left;
+}
+
+.styled-table2 th,
+.styled-table2 td {
+  padding: 12px 15px;
+}
+
+
+.styled-table2 tbody tr {
+  border-bottom: 1px solid #dddddd;
+}
+
+.styled-table2 tbody tr:nth-of-type(even) {
+  background-color: #f3f3f3;
+}
+
+.styled-table2 tbody tr:last-of-type {
+  border-bottom: 2px solid #009879;
+}
+
+.styled-table2 tbody tr.active-row {
+  font-weight: bold;
+  color: #009879;
+}
+
+
+.styled-table2 thead tr {
+  background-color: #b94f09;
   color: #ffffff;
   text-align: left;
 }
