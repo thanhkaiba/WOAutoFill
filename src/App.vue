@@ -110,16 +110,17 @@ export default {
       this.loading = true;
       var range = XLSX.utils.decode_range(ws['!ref']);
 
-      for (var i = 0; i < range.e.r; i++) {
+
+      for (var i = 0; i <= range.e.r + 1; i++) {       
         if (ws["D" + i] != null && ws["D" + i].v == this.form.style) {
           if (ws["Q" + i] != null && ws["Q" + i].v != null) {
+            console.log("row " + i);
             var q = "" + ws["Q" + i].v;
 
             if (q.indexOf("+") > 0) {
+          
               q.split("+").forEach(e => {
                 if (!isNaN(e) || e.indexOf("*") > 0) {
-                  console.log(e);
-                  console.log(e.split("*"));
                   if (e.indexOf("*") > 0) {
                     const multi = e.split("*");
                     for (var j = 0; j < +multi[1]; j++) {
@@ -138,10 +139,11 @@ export default {
                       "quatity": +e,
                     });
                   }
-                }
+                } 
 
               });
             } else {
+              
               if (q.indexOf("*") > 0) {
                 const multi = q.split("*");
                 for (var j = 0; j < +multi[1]; j++) {
@@ -176,7 +178,7 @@ export default {
         });
         return;
       }
-      
+
       this.submitable = true;
       this.showSubmitFeedback = true;
 
@@ -251,10 +253,9 @@ export default {
 
 
         }
-        console.log(editedItem);
+        
 
-
-        let config = {
+        const config = {
           method: 'post',
           headers: {
             'Accept': 'application/json, text/javascript, */*; q=0.01',
@@ -271,13 +272,17 @@ export default {
         this.listFail = [];
         try {
           for (var i = 0; i < editedItem.length; i++) {
-            var res, err = await axios.post('http://wsisswebprod1v/ISS/Order/SaveWOMdata', {
+            axios.post('http://wsisswebprod1v/ISS/Order/SaveWOMdata', {
               "data": [editedItem[i].item],
               "mode": "Recalc"
-            }, config);
-            if (res.data.status == false) {
+            }, config).then(res => {
+              if (res.data.Status == false) {
+                this.listFail.push(editedItem[i].origin);
+              }
+            }).catch(e => {
               this.listFail.push(editedItem[i].origin);
-            }
+            });
+
           }
 
 
@@ -303,9 +308,6 @@ export default {
             this.submitable = true;
           });
         }
-
-
-
       }
 
     },
@@ -433,9 +435,9 @@ export default {
 
     <transition name="fade" mode="out-in" v-show="showSubmitFeedback && listFail.length <= 0">
       <div class="column">
-    
+
         <button type="button" class="button1" v-show="submitable" v-on:click="submit">Fill Data</button>
-      
+
 
         <b>Total: {{ list.length }} items</b>
         <table class="styled-table">
