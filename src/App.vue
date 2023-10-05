@@ -129,6 +129,9 @@ export default {
                         "color": ws["E" + i].v,
                         "size": ws["G" + i].v,
                         "quatity": +multi[0],
+                        "pkg": ws["F" + i].v,
+                        "dc": ws["K" + i].v,
+                        "priority": ws["X" + i].v,
                       });
                     }
                   } else {
@@ -137,6 +140,9 @@ export default {
                       "color": ws["E" + i].v,
                       "size": ws["G" + i].v,
                       "quatity": +e,
+                      "pkg": ws["F" + i].v,
+                      "dc": ws["K" + i].v,
+                      "priority": ws["X" + i].v,
                     });
                   }
                 } 
@@ -152,6 +158,9 @@ export default {
                     "color": ws["E" + i].v,
                     "size": ws["G" + i].v,
                     "quatity": +multi[0],
+                    "pkg": ws["F" + i].v,
+                    "dc": ws["K" + i].v,
+                    "priority": ws["X" + i].v,
                   });
                 }
               } else {
@@ -160,6 +169,9 @@ export default {
                   "color": ws["E" + i].v,
                   "size": ws["G" + i].v,
                   "quatity": +q,
+                  "pkg": ws["F" + i].v,
+                  "dc": ws["K" + i].v,
+                  "priority": ws["X" + i].v,
                 });
               }
             }
@@ -240,6 +252,11 @@ export default {
             lockedItem[i]["TotalDozens"] = list[i].quatity;
             lockedItem[i]["SizeShortDes"] = list[i].size;
             lockedItem[i]["Size"] = Size;
+
+            lockedItem[i]["ExpeditePriority"] = list[i].priority;
+            lockedItem[i]["DcLoc"] = list[i].dc;
+            lockedItem[i]["GarmentStyle"] = list[i].pkg;
+            
             lockedItem[i]["Color"] = list[i].color;
             editedItem.push({
               item: lockedItem[i],
@@ -427,6 +444,9 @@ export default {
             <td>{{ item.color }}</td>
             <td>{{ item.size }}</td>
             <td>{{ item.quatity }}</td>
+            <td>{{ item.pkg }}</td>
+            <td>{{ item.dc }}</td>
+            <td>{{ item.priority }}</td>
           </tr>
         </tbody>
       </table>
@@ -463,6 +483,9 @@ export default {
               <td>{{ item.color }}</td>
               <td>{{ item.size }}</td>
               <td>{{ item.quatity }}</td>
+              <td>{{ item.pkg }}</td>
+              <td>{{ item.dc }}</td>
+              <td>{{ item.priority }}</td>
             </tr>
           </tbody>
         </table>
