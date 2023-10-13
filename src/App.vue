@@ -111,14 +111,14 @@ export default {
       var range = XLSX.utils.decode_range(ws['!ref']);
 
 
-      for (var i = 0; i <= range.e.r + 1; i++) {       
+      for (var i = 0; i <= range.e.r + 1; i++) {
         if (ws["D" + i] != null && ws["D" + i].v == this.form.style) {
           if (ws["Q" + i] != null && ws["Q" + i].v != null) {
             console.log("row " + i);
             var q = "" + ws["Q" + i].v;
 
             if (q.indexOf("+") > 0) {
-          
+
               q.split("+").forEach(e => {
                 if (!isNaN(e) || e.indexOf("*") > 0) {
                   if (e.indexOf("*") > 0) {
@@ -145,11 +145,11 @@ export default {
                       "priority": ws["X" + i].v,
                     });
                   }
-                } 
+                }
 
               });
             } else {
-              
+
               if (q.indexOf("*") > 0) {
                 const multi = q.split("*");
                 for (var j = 0; j < +multi[1]; j++) {
@@ -255,8 +255,8 @@ export default {
 
             lockedItem[i]["ExpeditePriority"] = list[i].priority;
             lockedItem[i]["DcLoc"] = list[i].dc;
-            lockedItem[i]["GarmentStyle"] = list[i].pkg;
-            
+            lockedItem[i]["Style"] = list[i].pkg;
+
             lockedItem[i]["Color"] = list[i].color;
             editedItem.push({
               item: lockedItem[i],
@@ -270,7 +270,7 @@ export default {
 
 
         }
-        
+
 
         const config = {
           method: 'post',
@@ -436,6 +436,15 @@ export default {
             <th class="text-left">
               Quatity
             </th>
+            <th class="text-left">
+              PKG Style
+            </th>
+            <th class="text-left">
+              DC
+            </th>
+            <th class="text-left">
+              Priority
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -474,6 +483,15 @@ export default {
               </th>
               <th class="text-left">
                 Quatity
+              </th>
+              <th class="text-left">
+                PKG Style
+              </th>
+              <th class="text-left">
+                DC
+              </th>
+              <th class="text-left">
+                Priority
               </th>
             </tr>
           </thead>
