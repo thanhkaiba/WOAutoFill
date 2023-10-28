@@ -275,11 +275,11 @@ export default {
             const Size = await this.getSize(lockedItem[i].Style, list[i].color, lockedItem[i]["Size"], list[i].size)
 
 
-            lockedItem[i]["CCurrDueDate"] = this.convertDate(lockedItem[i]["CurrDueDate"]);
-            lockedItem[i]["CurrDueDate"] = list[i].duedate.toISOString();
+            lockedItem[i]["CCurrDueDate"] = this.convertDate(lockedItem[i]["CCurrDueDate"]);
+            lockedItem[i]["CurrDueDate"] = this.convertDate(lockedItem[i]["CurrDueDate"]);
 
             lockedItem[i]["StartDate"] = this.convertDate(lockedItem[i]["StartDate"]);
-            lockedItem[i]["CStartDate"] = lockedItem[i]["StartDate"]
+            lockedItem[i]["CStartDate"] = this.convertDate(lockedItem[i]["CStartDate"]);
 
             lockedItem[i]["EarliestStartDate"] = this.convertDate(lockedItem[i]["EarliestStartDate"]);
             lockedItem[i]["DemandDate"] = this.convertDate(lockedItem[i]["DemandDate"]);
@@ -300,6 +300,9 @@ export default {
 
             lockedItem[i]["IsEdited"] = true;
             lockedItem[i]["Cloned"] = Cloned;
+
+            lockedItem[i]["CurrDueDate"] = list[i].duedate.toISOString();
+            
             lockedItem[i]["IsFieldChange"] = true;
             lockedItem[i]["Completed"] = false;
             lockedItem[i]["TotalDozens"] = list[i].quatity;
