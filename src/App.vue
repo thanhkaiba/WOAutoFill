@@ -70,6 +70,14 @@ export default {
       const date = new Date(milliseconds);
       return date.toISOString();
     },
+    convertDateXLSX(dateStr) {
+      if (dateStr == null || dateStr.length == 0) {
+        return "";
+      }
+      const configDate = new Date(dateStr);
+      const date = new Date.UTC(configDate.getFullYear(), configDate.getMonth(), configDate.getDate(), 5, 0, 0, 0);
+      return date.toISOString();
+    },
     async fakeSubmit() {
       console.log("on search");
       this.listFail = [];
@@ -111,75 +119,99 @@ export default {
       var range = XLSX.utils.decode_range(ws['!ref']);
 
 
-      for (var i = 0; i <= range.e.r + 1; i++) {
-        if (ws["D" + i] != null && ws["D" + i].v == this.form.style) {
-          if (ws["Q" + i] != null && ws["Q" + i].v != null) {
-            console.log("row " + i);
-            var q = "" + ws["Q" + i].v;
+      try {
+        for (var i = 0; i <= range.e.r + 1; i++) {
+          if (ws["D" + i] != null && ws["D" + i].v == this.form.style) {
+            if (ws["Q" + i] != null && ws["Q" + i].v != null) {
 
-            if (q.indexOf("+") > 0) {
+              if (ws["Y" + i] == null || ws["Y" + i].v == null || ws["Y" + i].v.length == 0) {
+                throw "Missing Due Date at row " + i;
+              }
+              var q = "" + ws["Q" + i].v;
 
-              q.split("+").forEach(e => {
-                if (!isNaN(e) || e.indexOf("*") > 0) {
-                  if (e.indexOf("*") > 0) {
-                    const multi = e.split("*");
-                    for (var j = 0; j < +multi[1]; j++) {
+              if (q.indexOf("+") > 0) {
+
+                q.split("+").forEach(e => {
+                  if (!isNaN(e) || e.indexOf("*") > 0) {
+                    if (e.indexOf("*") > 0) {
+                      const multi = e.split("*");
+                      for (var j = 0; j < +multi[1]; j++) {
+                        this.list.push({
+                          "style": ws["D" + i].v,
+                          "color": ws["E" + i].v,
+                          "size": ws["G" + i].v,
+                          "quatity": +multi[0],
+                          "pkg": ws["F" + i].v,
+                          "dc": ws["K" + i].v,
+                          "priority": ws["X" + i].v,
+                          "priority": ws["X" + i].v,
+                          "duedate": ws["Y" + i].v,
+                        });
+                      }
+                    } else {
                       this.list.push({
                         "style": ws["D" + i].v,
                         "color": ws["E" + i].v,
                         "size": ws["G" + i].v,
-                        "quatity": +multi[0],
+                        "quatity": +e,
                         "pkg": ws["F" + i].v,
                         "dc": ws["K" + i].v,
                         "priority": ws["X" + i].v,
+                        "duedate": ws["Y" + i].v,
                       });
                     }
-                  } else {
+                  }
+
+                });
+              } else {
+
+                if (q.indexOf("*") > 0) {
+                  const multi = q.split("*");
+                  for (var j = 0; j < +multi[1]; j++) {
                     this.list.push({
                       "style": ws["D" + i].v,
                       "color": ws["E" + i].v,
                       "size": ws["G" + i].v,
-                      "quatity": +e,
+                      "quatity": +multi[0],
                       "pkg": ws["F" + i].v,
                       "dc": ws["K" + i].v,
                       "priority": ws["X" + i].v,
+                      "duedate": ws["Y" + i].v,
                     });
                   }
-                }
-
-              });
-            } else {
-
-              if (q.indexOf("*") > 0) {
-                const multi = q.split("*");
-                for (var j = 0; j < +multi[1]; j++) {
+                } else {
                   this.list.push({
                     "style": ws["D" + i].v,
                     "color": ws["E" + i].v,
                     "size": ws["G" + i].v,
-                    "quatity": +multi[0],
+                    "quatity": +q,
                     "pkg": ws["F" + i].v,
                     "dc": ws["K" + i].v,
                     "priority": ws["X" + i].v,
+                    "duedate": ws["Y" + i].v,
                   });
                 }
-              } else {
-                this.list.push({
-                  "style": ws["D" + i].v,
-                  "color": ws["E" + i].v,
-                  "size": ws["G" + i].v,
-                  "quatity": +q,
-                  "pkg": ws["F" + i].v,
-                  "dc": ws["K" + i].v,
-                  "priority": ws["X" + i].v,
-                });
               }
+
             }
 
           }
-
         }
+      } catch (e) {
+        console.log(e);
+        this.loading = false;
+        if (this.list.length == 0) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: e,
+            footer: '<a href="">Why do I have this issue?</a>'
+          });
+          return;
+        }
+
       }
+
       this.loading = false;
       if (this.list.length == 0) {
         Swal.fire({
@@ -193,6 +225,7 @@ export default {
 
       this.submitable = true;
       this.showSubmitFeedback = true;
+
 
 
     },
@@ -222,11 +255,12 @@ export default {
           try {
             const Size = await this.getSize(lockedItem[i].Style, list[i].color, lockedItem[i]["Size"], list[i].size)
 
-            lockedItem[i]["CurrDueDate"] = this.convertDate(lockedItem[i]["CurrDueDate"]);
-            lockedItem[i]["CCurrDueDate"] = this.convertDate(lockedItem[i]["CCurrDueDate"]);
+
+            lockedItem[i]["CCurrDueDate"] = this.convertDate(lockedItem[i]["CurrDueDate"]);
+            lockedItem[i]["CurrDueDate"] = this.convertDateXLSX(list[i].duedate);
 
             lockedItem[i]["StartDate"] = this.convertDate(lockedItem[i]["StartDate"]);
-            lockedItem[i]["CStartDate"] = this.convertDate(lockedItem[i]["CStartDate"]);
+            lockedItem[i]["CStartDate"] = lockedItem[i]["StartDate"]
 
             lockedItem[i]["EarliestStartDate"] = this.convertDate(lockedItem[i]["EarliestStartDate"]);
             lockedItem[i]["DemandDate"] = this.convertDate(lockedItem[i]["DemandDate"]);
@@ -445,6 +479,9 @@ export default {
             <th class="text-left">
               Priority
             </th>
+            <th class="text-left">
+              Sew Due
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -456,6 +493,7 @@ export default {
             <td>{{ item.pkg }}</td>
             <td>{{ item.dc }}</td>
             <td>{{ item.priority }}</td>
+            <td>{{ item.duedate }}</td>
           </tr>
         </tbody>
       </table>
@@ -493,6 +531,9 @@ export default {
               <th class="text-left">
                 Priority
               </th>
+              <th class="text-left">
+                Sew Due
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -504,6 +545,7 @@ export default {
               <td>{{ item.pkg }}</td>
               <td>{{ item.dc }}</td>
               <td>{{ item.priority }}</td>
+              <td>{{ item.duedate }}</td>
             </tr>
           </tbody>
         </table>
