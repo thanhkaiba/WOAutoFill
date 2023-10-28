@@ -78,7 +78,7 @@ export default {
       var hours = Math.floor(total_seconds / (60 * 60));
       var minutes = Math.floor(total_seconds / 60) % 60;
 
-      const utc = Date.UTC(date_info.getFullYear(), date_info.getMonth(), date_info.getDate(), 5, minutes, seconds);
+      const utc = Date.UTC(date_info.getFullYear(), date_info.getMonth(), date_info.getDate(), 4, minutes, seconds);
       return new Date(utc);
     },
     convertDate(dateStr) {
@@ -344,7 +344,7 @@ export default {
           for (var i = 0; i < editedItem.length; i++) {
             axios.post('http://wsisswebprod1v/ISS/Order/SaveWOMdata', {
               "data": [editedItem[i].item],
-              "mode": "EditPFSUngroup"
+              "mode": "EditPFSUngroup```"
             }, config).then(res => {
               if (res.data.Status == false) {
                 this.listFail.push(editedItem[i].origin);
