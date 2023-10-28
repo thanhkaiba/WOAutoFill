@@ -62,6 +62,24 @@ export default {
       return "";
 
     },
+    ExcelDateToJSDate(serial) {
+      var utc_days = Math.floor(serial - 25569);
+      var utc_value = utc_days * 86400;
+      var date_info = new Date(utc_value * 1000);
+
+      var fractional_day = serial - Math.floor(serial) + 0.0000001;
+
+      var total_seconds = Math.floor(86400 * fractional_day);
+
+      var seconds = total_seconds % 60;
+
+      total_seconds -= seconds;
+
+      var hours = Math.floor(total_seconds / (60 * 60));
+      var minutes = Math.floor(total_seconds / 60) % 60;
+
+      return new Date.UTC(date_info.getFullYear(), date_info.getMonth(), date_info.getDate(), hours, minutes, seconds);
+    },
     convertDate(dateStr) {
       if (dateStr == null || dateStr.length == 0) {
         return dateStr;
@@ -145,7 +163,7 @@ export default {
                           "dc": ws["K" + i].v,
                           "priority": ws["X" + i].v,
                           "priority": ws["X" + i].v,
-                          "duedate": ws["Y" + i].v,
+                          "duedate": this.ExcelDateToJSDate(ws["Y" + i].v),
                         });
                       }
                     } else {
@@ -157,7 +175,7 @@ export default {
                         "pkg": ws["F" + i].v,
                         "dc": ws["K" + i].v,
                         "priority": ws["X" + i].v,
-                        "duedate": ws["Y" + i].v,
+                        "duedate": this.ExcelDateToJSDate(ws["Y" + i].v),
                       });
                     }
                   }
@@ -176,7 +194,7 @@ export default {
                       "pkg": ws["F" + i].v,
                       "dc": ws["K" + i].v,
                       "priority": ws["X" + i].v,
-                      "duedate": ws["Y" + i].v,
+                      "duedate": this.ExcelDateToJSDate(ws["Y" + i].v),
                     });
                   }
                 } else {
@@ -188,7 +206,7 @@ export default {
                     "pkg": ws["F" + i].v,
                     "dc": ws["K" + i].v,
                     "priority": ws["X" + i].v,
-                    "duedate": ws["Y" + i].v,
+                    "duedate": this.ExcelDateToJSDate(ws["Y" + i].v),
                   });
                 }
               }
@@ -257,7 +275,7 @@ export default {
 
 
             lockedItem[i]["CCurrDueDate"] = this.convertDate(lockedItem[i]["CurrDueDate"]);
-            lockedItem[i]["CurrDueDate"] = this.convertDateXLSX(list[i].duedate);
+            lockedItem[i]["CurrDueDate"] = list[i].duedate.toISOString();
 
             lockedItem[i]["StartDate"] = this.convertDate(lockedItem[i]["StartDate"]);
             lockedItem[i]["CStartDate"] = lockedItem[i]["StartDate"]
@@ -493,7 +511,7 @@ export default {
             <td>{{ item.pkg }}</td>
             <td>{{ item.dc }}</td>
             <td>{{ item.priority }}</td>
-            <td>{{ item.duedate }}</td>
+            <td>{{ item.duedate.toISOString() }}</td>
           </tr>
         </tbody>
       </table>
@@ -545,7 +563,7 @@ export default {
               <td>{{ item.pkg }}</td>
               <td>{{ item.dc }}</td>
               <td>{{ item.priority }}</td>
-              <td>{{ item.duedate }}</td>
+              <td>{{ item.duedate.toISOString() }}</td>
             </tr>
           </tbody>
         </table>
