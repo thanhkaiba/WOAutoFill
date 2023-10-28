@@ -94,7 +94,7 @@ export default {
         return "";
       }
       const configDate = new Date(dateStr);
-      const utc = Date.UTC(configDate.getFullYear(), configDate.getMonth(), configDate.getDate(), 5, 0, 0, 0);
+      const utc = Date.UTC(configDate.getFullYear(), configDate.getMonth(), configDate.getDate(), 4, 0, 0, 0);
       return (new Date(utc)).toISOString();
     },
     async fakeSubmit() {
@@ -344,7 +344,7 @@ export default {
           for (var i = 0; i < editedItem.length; i++) {
             axios.post('http://wsisswebprod1v/ISS/Order/SaveWOMdata', {
               "data": [editedItem[i].item],
-              "mode": "Recalc"
+              "mode": "EditPFSUngroup"
             }, config).then(res => {
               if (res.data.Status == false) {
                 this.listFail.push(editedItem[i].origin);
