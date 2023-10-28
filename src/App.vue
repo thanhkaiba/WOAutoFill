@@ -78,7 +78,7 @@ export default {
       var hours = Math.floor(total_seconds / (60 * 60));
       var minutes = Math.floor(total_seconds / 60) % 60;
 
-      const utc = Date.UTC(date_info.getFullYear(), date_info.getMonth(), date_info.getDate(), hours, minutes, seconds);
+      const utc = Date.UTC(date_info.getFullYear(), date_info.getMonth(), date_info.getDate(), 5, minutes, seconds);
       return new Date(utc);
     },
     convertDate(dateStr) {
