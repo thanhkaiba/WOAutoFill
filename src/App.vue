@@ -78,8 +78,8 @@ export default {
       var hours = Math.floor(total_seconds / (60 * 60));
       var minutes = Math.floor(total_seconds / 60) % 60;
 
-      const utc_value = Date.UTC(date_info.getFullYear(), date_info.getMonth(), date_info.getDate(), hours, minutes, seconds);
-      return new Date(utc_value);
+      const utc = Date.UTC(date_info.getFullYear(), date_info.getMonth(), date_info.getDate(), hours, minutes, seconds);
+      return new Date(utc);
     },
     convertDate(dateStr) {
       if (dateStr == null || dateStr.length == 0) {
@@ -94,8 +94,8 @@ export default {
         return "";
       }
       const configDate = new Date(dateStr);
-      const utc_value = Date.UTC(configDate.getFullYear(), configDate.getMonth(), configDate.getDate(), 5, 0, 0, 0);
-      return (new Date(utc_value)).toISOString();
+      const utc = Date.UTC(configDate.getFullYear(), configDate.getMonth(), configDate.getDate(), 5, 0, 0, 0);
+      return (new Date(utc)).toISOString();
     },
     async fakeSubmit() {
       console.log("on search");
