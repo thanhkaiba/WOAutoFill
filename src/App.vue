@@ -78,7 +78,7 @@ export default {
       var hours = Math.floor(total_seconds / (60 * 60));
       var minutes = Math.floor(total_seconds / 60) % 60;
 
-      return new Date.UTC(date_info.getFullYear(), date_info.getMonth(), date_info.getDate(), hours, minutes, seconds);
+      return Date.UTC(date_info.getFullYear(), date_info.getMonth(), date_info.getDate(), hours, minutes, seconds);
     },
     convertDate(dateStr) {
       if (dateStr == null || dateStr.length == 0) {
@@ -93,7 +93,7 @@ export default {
         return "";
       }
       const configDate = new Date(dateStr);
-      const date = new Date.UTC(configDate.getFullYear(), configDate.getMonth(), configDate.getDate(), 5, 0, 0, 0);
+      const date = Date.UTC(configDate.getFullYear(), configDate.getMonth(), configDate.getDate(), 5, 0, 0, 0);
       return date.toISOString();
     },
     async fakeSubmit() {
