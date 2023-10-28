@@ -344,7 +344,7 @@ export default {
           for (var i = 0; i < editedItem.length; i++) {
             axios.post('http://wsisswebprod1v/ISS/Order/SaveWOMdata', {
               "data": [editedItem[i].item],
-              "mode": "EditPFSUngroup```"
+              "mode": "EditPFSUngroup"
             }, config).then(res => {
               if (res.data.Status == false) {
                 this.listFail.push(editedItem[i].origin);
