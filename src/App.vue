@@ -388,9 +388,134 @@ export default {
       }
 
     },
+    async filldate(searchData, list) {
+      var lockedItem = [];
+
+      for (var i = 0; i < searchData["Total"]; i++) {
+
+        if (searchData["Data"][i]["OrderStatusDesc"] == "Locked") {
+          lockedItem.push(searchData["Data"][i]);
+        }
+      }
+
+
+      if (lockedItem.length < list.length) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Oops...',
+          text: 'Not enough locked item for style ' + this.form.style + ' !',
+          footer: '<a href="">Why do I have this issue?</a>'
+        });
+        return;
+      } else {
+        var editedItem = [];
+        for (var i = 0; i < list.length; i++) {
+
+          try {
+
+            lockedItem[i]["CCurrDueDate"] = this.convertDate(lockedItem[i]["CCurrDueDate"]);
+            lockedItem[i]["CurrDueDate"] = this.convertDate(lockedItem[i]["CurrDueDate"]);
+
+            lockedItem[i]["StartDate"] = this.convertDate(lockedItem[i]["StartDate"]);
+            lockedItem[i]["CStartDate"] = this.convertDate(lockedItem[i]["CStartDate"]);
+
+            lockedItem[i]["EarliestStartDate"] = this.convertDate(lockedItem[i]["EarliestStartDate"]);
+            lockedItem[i]["DemandDate"] = this.convertDate(lockedItem[i]["DemandDate"]);
+            var Cloned = JSON.parse(JSON.stringify(lockedItem[i]));
+
+
+
+            Cloned["idField"] = "Id";
+            Cloned["_defaultId"] = 0;
+
+            if (lockedItem[i]["CCurrDueDate"] == null) {
+              lockedItem[i]["CCurrDueDate"] = lockedItem[i]["CurrDueDate"]
+            }
+
+            if (lockedItem[i]["CStartDate"] == null) {
+              lockedItem[i]["CStartDate"] = lockedItem[i]["StartDate"]
+            }
+
+            lockedItem[i]["IsEdited"] = true;
+            lockedItem[i]["Cloned"] = Cloned;
+
+            lockedItem[i]["CurrDueDate"] = list[i].duedate.toISOString();
+            
+          
+            editedItem.push({
+              item: lockedItem[i],
+              origin: list[i],
+            });
+          } catch (e) {
+
+            return;
+          }
+
+
+        }
+
+
+        const config = {
+          method: 'post',
+          headers: {
+            'Accept': 'application/json, text/javascript, */*; q=0.01',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Connection': 'keep-alive',
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Cookie': 'menustate=false',
+            'Origin': 'http://wsisswebprod1v',
+            'Referer': 'http://wsisswebprod1v/ISS/Order/WOManagement',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        };
+        this.listFail = [];
+        this.loading = true;
+        try {
+          for (var i = 0; i < editedItem.length; i++) {
+            axios.post('http://wsisswebprod1v/ISS/Order/SaveWOMdata', {
+              "data": [editedItem[i].item],
+              "mode": "EditPFSUngroup"
+            }, config).then(res => {
+              console.log(res.data);
+              if (res.data.Status == false) {
+                this.listFail.push(editedItem[i].origin);
+              }
+            }).catch(e => {
+              this.listFail.push(editedItem[i].origin);
+            });
+
+          }
+
+
+          Swal.fire({
+            position: 'top-end',
+            icon: 'success',
+            title: 'Your work has been saved',
+            showConfirmButton: false,
+            timer: 1500
+          }).then(e => {
+            this.form.style = "";
+            this.list = [];
+            this.showSubmitFeedback = false;
+            this.submitable = true;
+          })
+        } catch (error) {
+          // Handle errors
+          Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            footer: '<a href="">Why do I have this issue?</a>'
+          }).then(e => {
+            this.submitable = true;
+          });
+        } finally {
+          this.loading = false;
+        }
+      }
+
+    },
     async submit() {
-
-
       Swal.fire({
         title: 'Are you sure?',
         text: "You won't be able to revert this!",
@@ -427,6 +552,62 @@ export default {
           axios.request(config)
             .then(async (response) => {
               await this.filldata(response.data, this.list);
+              this.loading = false;
+            })
+            .catch((error) => {
+              this.loading = false;
+              Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: error.message,
+                footer: '<a href="">Why do I have this issue?</a>'
+              });
+            });
+
+        }
+      })
+
+
+
+
+    },
+    async submitdate() {
+      Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: "Yes, I'm sure!"
+      }).then((result) => {
+        if (result.isConfirmed) {
+
+          this.submitable = false;
+          let data = 'sort=&group=&filter=&SuperOrder=&StyleType=Selling+Style&SStyle=' + this.form.style + '&SColor=&SAttribute=&SSize=&DC=&Rev=&MfgPathId=95&Rule=&GroupId=&MFGPlant=&CylinderSize=&DyeBle=&TextileGroup=&Alt=&Machine=&Yarn=&DueDate=Earliest+Start&Week_input=Current+%2B+Prior+Week&Week=Current+%2B+Prior+Week&MoreWeeks_input=52&MoreWeeks=52&BOMMismatches=false&Fabric=&SuggestedLots=true&SpillOver=true&LockedLots=true&ReleasedLotsThisWeek=true&CustomerOrders=true&Events=true&MaxBuild=true&TILs=true&Forecast=false&StockTarget=true&Planner=&WorkCenter=&CapacityGroup=&CorpDiv=&BusinessUnit=&Src=A';
+
+          let config = {
+            method: 'post',
+            url: 'http://wsisswebprod1v/ISS/Order/WOManagement',
+            headers: {
+              'Accept': '*/*',
+              'Accept-Language': 'en-US,en;q=0.9',
+              'Connection': 'keep-alive',
+              'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+              'Cookie': 'menustate=false',
+              'Origin': 'http://wsisswebprod1v',
+              'Referer': 'http://wsisswebprod1v/ISS/Order/WOManagement',
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
+              'X-Requested-With': 'XMLHttpRequest',
+              'Access-Control-Allow-Origin': '*'
+            },
+            data: data
+          };
+          this.loading = true;
+
+          axios.request(config)
+            .then(async (response) => {
+              await this.filldate(response.data, this.list);
               this.loading = false;
             })
             .catch((error) => {
@@ -530,7 +711,7 @@ export default {
       <div class="column">
 
         <button type="button" class="button1" v-show="submitable" v-on:click="submit">Fill Data</button>
-
+        <button type="button" class="button1" v-show="submitable" v-on:click="submitdate">Update Date</button>
 
         <b>Total: {{ list.length }} items</b>
         <table class="styled-table">
