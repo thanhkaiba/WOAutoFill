@@ -156,25 +156,24 @@ export default {
                       const multi = e.split("*");
                       for (var j = 0; j < +multi[1]; j++) {
                         this.list.push({
-                          "style": ws["D" + i].v,
-                          "color": ws["E" + i].v,
+                          "style": ws["D" + i].v.trim(),
+                          "color": ws["E" + i].v.trim(),
                           "size": ws["G" + i].v,
                           "quatity": +multi[0],
                           "pkg": ws["F" + i].v,
-                          "dc": ws["K" + i].v,
-                          "priority": ws["X" + i].v,
+                          "dc": ws["K" + i].v.trim(),
                           "priority": ws["X" + i].v,
                           "duedate": this.ExcelDateToJSDate(ws["Y" + i].v),
                         });
                       }
                     } else {
                       this.list.push({
-                        "style": ws["D" + i].v,
-                        "color": ws["E" + i].v,
+                        "style": ws["D" + i].v.trim(),
+                        "color": ws["E" + i].v.trim(),
                         "size": ws["G" + i].v,
                         "quatity": +e,
                         "pkg": ws["F" + i].v,
-                        "dc": ws["K" + i].v,
+                        "dc": ws["K" + i].v.trim(),
                         "priority": ws["X" + i].v,
                         "duedate": this.ExcelDateToJSDate(ws["Y" + i].v),
                       });
@@ -188,24 +187,24 @@ export default {
                   const multi = q.split("*");
                   for (var j = 0; j < +multi[1]; j++) {
                     this.list.push({
-                      "style": ws["D" + i].v,
-                      "color": ws["E" + i].v,
+                      "style": ws["D" + i].v.trim(),
+                      "color": ws["E" + i].v.trim(),
                       "size": ws["G" + i].v,
                       "quatity": +multi[0],
                       "pkg": ws["F" + i].v,
-                      "dc": ws["K" + i].v,
+                      "dc": ws["K" + i].v.trim(),
                       "priority": ws["X" + i].v,
                       "duedate": this.ExcelDateToJSDate(ws["Y" + i].v),
                     });
                   }
                 } else {
                   this.list.push({
-                    "style": ws["D" + i].v,
-                    "color": ws["E" + i].v,
+                    "style": ws["D" + i].v.trim(),
+                    "color": ws["E" + i].v.trim(),
                     "size": ws["G" + i].v,
                     "quatity": +q,
                     "pkg": ws["F" + i].v,
-                    "dc": ws["K" + i].v,
+                    "dc": ws["K" + i].v.trim(),
                     "priority": ws["X" + i].v,
                     "duedate": this.ExcelDateToJSDate(ws["Y" + i].v),
                   });
@@ -310,6 +309,7 @@ export default {
             lockedItem[i]["Size"] = Size;
 
             lockedItem[i]["ExpeditePriority"] = list[i].priority;
+          
             lockedItem[i]["DcLoc"] = list[i].dc;
             lockedItem[i]["Style"] = list[i].pkg;
 
