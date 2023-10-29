@@ -343,12 +343,14 @@ export default {
           }
         };
         this.listFail = [];
+        this.loading = true;
         try {
           for (var i = 0; i < editedItem.length; i++) {
             axios.post('http://wsisswebprod1v/ISS/Order/SaveWOMdata', {
               "data": [editedItem[i].item],
-              "mode": "EditPFSUngroup"
+              "mode": "Recalc"
             }, config).then(res => {
+              console.log(res.data);
               if (res.data.Status == false) {
                 this.listFail.push(editedItem[i].origin);
               }
@@ -380,6 +382,8 @@ export default {
           }).then(e => {
             this.submitable = true;
           });
+        } finally {
+          this.loading = false;
         }
       }
 
