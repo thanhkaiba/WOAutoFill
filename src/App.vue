@@ -373,7 +373,7 @@ export default {
           }).then(e => {
             this.form.style = "";
             this.list = [];
-            this.showSubmitFeedback = false;
+            this.showSubmitFeedback = true;
             this.submitable = true;
           })
         } catch (error) {
@@ -409,7 +409,7 @@ export default {
           text: 'Not enough locked item for style ' + this.form.style + ' !',
           footer: '<a href="">Why do I have this issue?</a>'
         });
-        return;
+
       } else {
         let editedItem = [];
         for (let i = 0; i < list.length; i++) {
@@ -505,7 +505,7 @@ export default {
           }).then(e => {
             this.form.style = "";
             this.list = [];
-            this.showSubmitFeedback = false;
+            this.showSubmitFeedback = true;
             this.submitable = true;
           })
         } catch (error) {
