@@ -163,6 +163,7 @@ export default {
                           "pkg": ws["F" + i].v,
                           "dc": ws["K" + i].v.trim(),
                           "priority": ws["X" + i].v,
+                          "revision":  ws["I" + i] != null && ("" + ws["I" + i].v).trim().length > 0 ? +ws["I" + i].v : 0,
                           "duedate": this.ExcelDateToJSDate(ws["Y" + i].v),
                         });
                       }
@@ -175,6 +176,7 @@ export default {
                         "pkg": ws["F" + i].v,
                         "dc": ws["K" + i].v.trim(),
                         "priority": ws["X" + i].v,
+                        "revision":  ws["I" + i] != null && ("" + ws["I" + i].v).trim().length > 0 ? +ws["I" + i].v : 0,
                         "duedate": this.ExcelDateToJSDate(ws["Y" + i].v),
                       });
                     }
@@ -194,6 +196,7 @@ export default {
                       "pkg": ws["F" + i].v,
                       "dc": ws["K" + i].v.trim(),
                       "priority": ws["X" + i].v,
+                      "revision":  ws["I" + i] != null && ("" + ws["I" + i].v).trim().length > 0 ? +ws["I" + i].v : 0,
                       "duedate": this.ExcelDateToJSDate(ws["Y" + i].v),
                     });
                   }
@@ -206,6 +209,7 @@ export default {
                     "pkg": ws["F" + i].v,
                     "dc": ws["K" + i].v.trim(),
                     "priority": ws["X" + i].v,
+                    "revision":  ws["I" + i] != null && ("" + ws["I" + i].v).trim().length > 0 ? +ws["I" + i].v : 0,
                     "duedate": this.ExcelDateToJSDate(ws["Y" + i].v),
                   });
                 }
@@ -312,7 +316,7 @@ export default {
           
             lockedItem[i]["DcLoc"] = list[i].dc;
             lockedItem[i]["Style"] = list[i].pkg;
-
+            lockedItem[i]["Revision"] = list[i].revision;
             lockedItem[i]["Color"] = list[i].color;
             editedItem.push({
               item: lockedItem[i],
@@ -687,6 +691,9 @@ export default {
               Priority
             </th>
             <th class="text-left">
+              Revision
+            </th>
+            <th class="text-left">
               Sew Due
             </th>
           </tr>
@@ -701,6 +708,7 @@ export default {
             <td>{{ item.dc }}</td>
             <td>{{ item.priority }}</td>
             <td>{{ item.duedate.toISOString() }}</td>
+            <td>{{ item.revision }}</td>
           </tr>
         </tbody>
       </table>
@@ -739,6 +747,9 @@ export default {
                 Priority
               </th>
               <th class="text-left">
+                Revision
+              </th>
+              <th class="text-left">
                 Sew Due
               </th>
             </tr>
@@ -752,6 +763,7 @@ export default {
               <td>{{ item.pkg }}</td>
               <td>{{ item.dc }}</td>
               <td>{{ item.priority }}</td>
+              <td>{{ item.revision }}</td>
               <td>{{ item.duedate.toISOString() }}</td>
             </tr>
           </tbody>
