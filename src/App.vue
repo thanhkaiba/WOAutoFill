@@ -73,14 +73,13 @@ export default {
 
       total_seconds -= seconds;
 
-      let hours = Math.floor(total_seconds / (60 * 60));
       let minutes = Math.floor(total_seconds / 60) % 60;
 
       const utc = Date.UTC(date_info.getFullYear(), date_info.getMonth(), date_info.getDate(), 4, minutes, seconds);
       return new Date(utc);
     },
     convertDate(dateStr) {
-      if (dateStr == null || dateStr.length == 0) {
+      if (dateStr == null || dateStr.length === 0) {
         return dateStr;
       }
       const milliseconds = parseInt(dateStr.match(/\/Date\((\d+)\)\//)[1]);
@@ -88,7 +87,7 @@ export default {
       return date.toISOString();
     },
     convertDateXLSX(dateStr) {
-      if (dateStr == null || dateStr.length == 0) {
+      if (dateStr == null || dateStr.length === 0) {
         return "";
       }
       const configDate = new Date(dateStr);
@@ -100,7 +99,7 @@ export default {
       this.listFail = [];
       const xlsxfile = this.$refs.file.files[0];
 
-      if (this.form.style.length == 0) {
+      if (this.form.style.length === 0) {
         Swal.fire(
           'The Style?',
           'Please style code!',
@@ -118,9 +117,10 @@ export default {
         return;
       }
 
+      let ws;
       try {
-        let workbook = XLSX.read(await xlsxfile.arrayBuffer(), { type: 'binary' });
-        let ws = workbook.Sheets[this.sheet];
+        const workbook = XLSX.read(await xlsxfile.arrayBuffer(), { type: 'binary' });
+        ws = workbook.Sheets[this.sheet];
       } catch (e) {
         Swal.fire({
           icon: 'error',
@@ -138,10 +138,10 @@ export default {
 
       try {
         for (let i = 0; i <= range.e.r + 1; i++) {
-          if (ws["D" + i] != null && ws["D" + i].v == this.form.style) {
+          if (ws["D" + i] != null && ws["D" + i].v === this.form.style) {
             if (ws["Q" + i] != null && ws["Q" + i].v != null) {
 
-              if (ws["Y" + i] == null || ws["Y" + i].v == null || ws["Y" + i].v.length == 0) {
+              if (ws["Y" + i] == null || ws["Y" + i].v == null || ws["Y" + i].v.length === 0) {
                 throw "Missing Due Date at row " + i;
               }
               let q = "" + ws["Q" + i].v;
@@ -220,7 +220,7 @@ export default {
       } catch (e) {
         console.log(e);
         this.loading = false;
-        if (this.list.length == 0) {
+        if (this.list.length === 0) {
           Swal.fire({
             icon: 'error',
             title: 'Oops...',
@@ -233,7 +233,7 @@ export default {
       }
 
       this.loading = false;
-      if (this.list.length == 0) {
+      if (this.list.length === 0) {
         Swal.fire({
           icon: 'error',
           title: 'Oops...',
@@ -254,7 +254,7 @@ export default {
 
       for (let i = 0; i < searchData["Total"]; i++) {
 
-        if (searchData["Data"][i]["OrderStatusDesc"] == "Locked") {
+        if (searchData["Data"][i]["OrderStatusDesc"] === "Locked") {
           lockedItem.push(searchData["Data"][i]);
         }
       }
@@ -267,7 +267,6 @@ export default {
           text: 'Not enough locked item for style ' + this.form.style + ' !',
           footer: '<a href="">Why do I have this issue?</a>'
         });
-        return;
       } else {
         const editedItem = [];
         for (let i = 0; i < list.length; i++) {
@@ -354,7 +353,7 @@ export default {
               "mode": "Recalc"
             }, config).then(res => {
               console.log(res.data);
-              if (res.data.Status == false) {
+              if (res.data["Status"] === false) {
                 this.listFail.push(editedItem[i].origin);
               }
             }).catch(e => {
@@ -396,7 +395,7 @@ export default {
 
       for (let i = 0; i < searchData["Total"]; i++) {
 
-        if (searchData["Data"][i]["OrderStatusDesc"] == "Locked") {
+        if (searchData["Data"][i]["OrderStatusDesc"] === "Locked") {
           lockedItem.push(searchData["Data"][i]);
         }
       }
@@ -486,7 +485,7 @@ export default {
               "mode": "EditPFSUngroup"
             }, config).then(res => {
               console.log(res.data);
-              if (res.data.Status == false) {
+              if (res.data["Status"] === false) {
                 this.listFail.push(editedItem[i].origin);
               }
             }).catch(e => {
@@ -840,7 +839,7 @@ form.example::after {
 .button1 {
   display: inline-block;
   padding: 15px 25px;
-  margin: 30px 0px 30px 0px;
+  margin: 30px 0 30px 0;
   font-size: 24px;
   width: 100%;
   cursor: pointer;
@@ -1019,7 +1018,6 @@ input[type=submit]:hover {
 input[type=file]::file-selector-button {
   border: 2px solid #5c6ae7;
   padding: 12px;
-  border: 12px;
   border-radius: 4px;
   background-color: #a29bfe;
   transition: 1s;
