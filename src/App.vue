@@ -430,14 +430,25 @@ export default {
             Cloned["idField"] = "Id";
             Cloned["_defaultId"] = 0;
 
+
+          
+            if (lockedItem[i]["CCurrDueDate"] == null) {
+              lockedItem[i]["CCurrDueDate"] = lockedItem[i]["CurrDueDate"]
+            }
+
+            if (lockedItem[i]["CStartDate"] == null) {
+              lockedItem[i]["CStartDate"] = lockedItem[i]["StartDate"]
+            }
           
 
             lockedItem[i]["IsEdited"] = true;
+            lockedItem[i]["IsFieldChange"] = true;
+            lockedItem[i]["Completed"] = false;
             lockedItem[i]["Cloned"] = Cloned;
 
 
             lockedItem[i]["CurrDueDate"] = list[i].duedate.toISOString();
-            lockedItem[i]["Completed"] = false;
+          
 
             editedItem.push({
               item: lockedItem[i],
