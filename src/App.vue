@@ -47,10 +47,8 @@ export default {
       };
 
       try {
-        var response = await axios.request(config);
-        console.log(response);
-        for (var i = 0; i < response.data.length; i++) {
-          console.log(response.data[i]["SizeDesc"], response.data[i]["Size"], SizeDesc);
+        let response = await axios.request(config);
+        for (let i = 0; i < response.data.length; i++) {
           if (response.data[i]["SizeDesc"] == SizeDesc) {
             return response.data[i]["Size"];
           }
@@ -63,20 +61,20 @@ export default {
 
     },
     ExcelDateToJSDate(serial) {
-      var utc_days = Math.floor(serial - 25569);
-      var utc_value = utc_days * 86400;
-      var date_info = new Date(utc_value * 1000);
+      let utc_days = Math.floor(serial - 25569);
+      let utc_value = utc_days * 86400;
+      let date_info = new Date(utc_value * 1000);
 
-      var fractional_day = serial - Math.floor(serial) + 0.0000001;
+      let fractional_day = serial - Math.floor(serial) + 0.0000001;
 
-      var total_seconds = Math.floor(86400 * fractional_day);
+      let total_seconds = Math.floor(86400 * fractional_day);
 
-      var seconds = total_seconds % 60;
+      let seconds = total_seconds % 60;
 
       total_seconds -= seconds;
 
-      var hours = Math.floor(total_seconds / (60 * 60));
-      var minutes = Math.floor(total_seconds / 60) % 60;
+      let hours = Math.floor(total_seconds / (60 * 60));
+      let minutes = Math.floor(total_seconds / 60) % 60;
 
       const utc = Date.UTC(date_info.getFullYear(), date_info.getMonth(), date_info.getDate(), 4, minutes, seconds);
       return new Date(utc);
@@ -121,8 +119,8 @@ export default {
       }
 
       try {
-        var workbook = XLSX.read(await xlsxfile.arrayBuffer(), { type: 'binary' });
-        var ws = workbook.Sheets[this.sheet];
+        let workbook = XLSX.read(await xlsxfile.arrayBuffer(), { type: 'binary' });
+        let ws = workbook.Sheets[this.sheet];
       } catch (e) {
         Swal.fire({
           icon: 'error',
@@ -135,18 +133,18 @@ export default {
 
       this.list = [];
       this.loading = true;
-      var range = XLSX.utils.decode_range(ws['!ref']);
+      let range = XLSX.utils.decode_range(ws['!ref']);
 
 
       try {
-        for (var i = 0; i <= range.e.r + 1; i++) {
+        for (let i = 0; i <= range.e.r + 1; i++) {
           if (ws["D" + i] != null && ws["D" + i].v == this.form.style) {
             if (ws["Q" + i] != null && ws["Q" + i].v != null) {
 
               if (ws["Y" + i] == null || ws["Y" + i].v == null || ws["Y" + i].v.length == 0) {
                 throw "Missing Due Date at row " + i;
               }
-              var q = "" + ws["Q" + i].v;
+              let q = "" + ws["Q" + i].v;
 
               if (q.indexOf("+") > 0) {
 
@@ -154,29 +152,29 @@ export default {
                   if (!isNaN(e) || e.indexOf("*") > 0) {
                     if (e.indexOf("*") > 0) {
                       const multi = e.split("*");
-                      for (var j = 0; j < +multi[1]; j++) {
+                      for (let j = 0; j < +multi[1]; j++) {
                         this.list.push({
-                          "style": ws["D" + i].v.trim(),
+                          "style": ws["D" + i].v,
                           "color": ws["E" + i].v.trim(),
                           "size": ws["G" + i].v,
                           "quatity": +multi[0],
                           "pkg": ws["F" + i].v,
                           "dc": ws["K" + i].v.trim(),
                           "priority": ws["X" + i].v,
-                          "revision":  ws["I" + i] != null && ("" + ws["I" + i].v).trim().length > 0 ? +ws["I" + i].v : 0,
+                          "revision": ws["I" + i] != null && ("" + ws["I" + i].v).trim().length > 0 ? +ws["I" + i].v : 0,
                           "duedate": this.ExcelDateToJSDate(ws["Y" + i].v),
                         });
                       }
                     } else {
                       this.list.push({
-                        "style": ws["D" + i].v.trim(),
+                        "style": ws["D" + i].v,
                         "color": ws["E" + i].v.trim(),
                         "size": ws["G" + i].v,
                         "quatity": +e,
                         "pkg": ws["F" + i].v,
                         "dc": ws["K" + i].v.trim(),
                         "priority": ws["X" + i].v,
-                        "revision":  ws["I" + i] != null && ("" + ws["I" + i].v).trim().length > 0 ? +ws["I" + i].v : 0,
+                        "revision": ws["I" + i] != null && ("" + ws["I" + i].v).trim().length > 0 ? +ws["I" + i].v : 0,
                         "duedate": this.ExcelDateToJSDate(ws["Y" + i].v),
                       });
                     }
@@ -187,29 +185,29 @@ export default {
 
                 if (q.indexOf("*") > 0) {
                   const multi = q.split("*");
-                  for (var j = 0; j < +multi[1]; j++) {
+                  for (let j = 0; j < +multi[1]; j++) {
                     this.list.push({
-                      "style": ws["D" + i].v.trim(),
+                      "style": ws["D" + i].v,
                       "color": ws["E" + i].v.trim(),
                       "size": ws["G" + i].v,
                       "quatity": +multi[0],
                       "pkg": ws["F" + i].v,
                       "dc": ws["K" + i].v.trim(),
                       "priority": ws["X" + i].v,
-                      "revision":  ws["I" + i] != null && ("" + ws["I" + i].v).trim().length > 0 ? +ws["I" + i].v : 0,
+                      "revision": ws["I" + i] != null && ("" + ws["I" + i].v).trim().length > 0 ? +ws["I" + i].v : 0,
                       "duedate": this.ExcelDateToJSDate(ws["Y" + i].v),
                     });
                   }
                 } else {
                   this.list.push({
-                    "style": ws["D" + i].v.trim(),
+                    "style": ws["D" + i].v,
                     "color": ws["E" + i].v.trim(),
                     "size": ws["G" + i].v,
                     "quatity": +q,
                     "pkg": ws["F" + i].v,
                     "dc": ws["K" + i].v.trim(),
                     "priority": ws["X" + i].v,
-                    "revision":  ws["I" + i] != null && ("" + ws["I" + i].v).trim().length > 0 ? +ws["I" + i].v : 0,
+                    "revision": ws["I" + i] != null && ("" + ws["I" + i].v).trim().length > 0 ? +ws["I" + i].v : 0,
                     "duedate": this.ExcelDateToJSDate(ws["Y" + i].v),
                   });
                 }
@@ -252,9 +250,9 @@ export default {
 
     },
     async filldata(searchData, list) {
-      var lockedItem = [];
+      let lockedItem = [];
 
-      for (var i = 0; i < searchData["Total"]; i++) {
+      for (let i = 0; i < searchData["Total"]; i++) {
 
         if (searchData["Data"][i]["OrderStatusDesc"] == "Locked") {
           lockedItem.push(searchData["Data"][i]);
@@ -271,8 +269,8 @@ export default {
         });
         return;
       } else {
-        var editedItem = [];
-        for (var i = 0; i < list.length; i++) {
+        const editedItem = [];
+        for (let i = 0; i < list.length; i++) {
 
           try {
             const Size = await this.getSize(lockedItem[i].Style, list[i].color, lockedItem[i]["Size"], list[i].size)
@@ -286,7 +284,7 @@ export default {
 
             lockedItem[i]["EarliestStartDate"] = this.convertDate(lockedItem[i]["EarliestStartDate"]);
             lockedItem[i]["DemandDate"] = this.convertDate(lockedItem[i]["DemandDate"]);
-            var Cloned = JSON.parse(JSON.stringify(lockedItem[i]));
+            let Cloned = JSON.parse(JSON.stringify(lockedItem[i]));
 
 
 
@@ -303,9 +301,6 @@ export default {
 
             lockedItem[i]["IsEdited"] = true;
             lockedItem[i]["Cloned"] = Cloned;
-
-            lockedItem[i]["CurrDueDate"] = list[i].duedate.toISOString();
-            
             lockedItem[i]["IsFieldChange"] = true;
             lockedItem[i]["Completed"] = false;
             lockedItem[i]["TotalDozens"] = list[i].quatity;
@@ -313,7 +308,6 @@ export default {
             lockedItem[i]["Size"] = Size;
 
             lockedItem[i]["ExpeditePriority"] = list[i].priority;
-          
             lockedItem[i]["DcLoc"] = list[i].dc;
             lockedItem[i]["Style"] = list[i].pkg;
             lockedItem[i]["Revision"] = list[i].revision;
@@ -323,7 +317,12 @@ export default {
               origin: list[i],
             });
           } catch (e) {
-
+            Swal.fire({
+              icon: 'error',
+              title: 'Oops...',
+              text: e,
+              footer: '<a href="">Why do I have this issue?</a>'
+            });
             return;
           }
 
@@ -349,7 +348,7 @@ export default {
         this.listFail = [];
         this.loading = true;
         try {
-          for (var i = 0; i < editedItem.length; i++) {
+          for (let i = 0; i < editedItem.length; i++) {
             axios.post('http://wsisswebprod1v/ISS/Order/SaveWOMdata', {
               "data": [editedItem[i].item],
               "mode": "Recalc"
@@ -393,9 +392,9 @@ export default {
 
     },
     async filldate(searchData, list) {
-      var lockedItem = [];
+      let lockedItem = [];
 
-      for (var i = 0; i < searchData["Total"]; i++) {
+      for (let i = 0; i < searchData["Total"]; i++) {
 
         if (searchData["Data"][i]["OrderStatusDesc"] == "Locked") {
           lockedItem.push(searchData["Data"][i]);
@@ -412,8 +411,8 @@ export default {
         });
         return;
       } else {
-        var editedItem = [];
-        for (var i = 0; i < list.length; i++) {
+        let editedItem = [];
+        for (let i = 0; i < list.length; i++) {
 
           try {
 
@@ -425,7 +424,7 @@ export default {
 
             lockedItem[i]["EarliestStartDate"] = this.convertDate(lockedItem[i]["EarliestStartDate"]);
             lockedItem[i]["DemandDate"] = this.convertDate(lockedItem[i]["DemandDate"]);
-            var Cloned = JSON.parse(JSON.stringify(lockedItem[i]));
+            const Cloned = JSON.parse(JSON.stringify(lockedItem[i]));
 
 
 
@@ -444,14 +443,19 @@ export default {
             lockedItem[i]["Cloned"] = Cloned;
 
             lockedItem[i]["CurrDueDate"] = list[i].duedate.toISOString();
-            
-          
+
+
             editedItem.push({
               item: lockedItem[i],
               origin: list[i],
             });
           } catch (e) {
-
+            Swal.fire({
+              icon: 'error',
+              title: 'Oops...',
+              text: e,
+              footer: '<a href="">Why do I have this issue?</a>'
+            });
             return;
           }
 
@@ -476,7 +480,7 @@ export default {
         this.listFail = [];
         this.loading = true;
         try {
-          for (var i = 0; i < editedItem.length; i++) {
+          for (let i = 0; i < editedItem.length; i++) {
             axios.post('http://wsisswebprod1v/ISS/Order/SaveWOMdata', {
               "data": [editedItem[i].item],
               "mode": "EditPFSUngroup"
