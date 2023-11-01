@@ -448,6 +448,15 @@ export default {
 
 
             lockedItem[i]["CurrDueDate"] = list[i].duedate.toISOString();
+            lockedItem[i]["TotalDozens"] = list[i].quatity;
+            lockedItem[i]["SizeShortDes"] = list[i].size;
+            lockedItem[i]["Size"] = Size;
+
+            lockedItem[i]["ExpeditePriority"] = list[i].priority;
+            lockedItem[i]["DcLoc"] = list[i].dc;
+            lockedItem[i]["Style"] = list[i].pkg;
+            lockedItem[i]["Revision"] = list[i].revision;
+            lockedItem[i]["Color"] = list[i].color;
           
 
             editedItem.push({
@@ -716,8 +725,8 @@ export default {
             <td>{{ item.pkg }}</td>
             <td>{{ item.dc }}</td>
             <td>{{ item.priority }}</td>
-            <td>{{ item.duedate.toISOString() }}</td>
             <td>{{ item.revision }}</td>
+            <td>{{ item.duedate.toISOString() }}</td>
           </tr>
         </tbody>
       </table>
@@ -728,7 +737,7 @@ export default {
       <div class="column">
 
         <button type="button" class="button1" v-show="submitable" v-on:click="submit">Fill Data</button>
-        <button type="button" class="button1" v-show="submitable" v-on:click="submitdate">Update Date</button>
+        <button type="button" class="button1" v-show="submitable" v-on:click="submitdate">Fill Data & Update Date</button>
 
         <b>Total: {{ list.length }} items</b>
         <table class="styled-table">
