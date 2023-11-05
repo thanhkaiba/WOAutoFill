@@ -271,48 +271,59 @@ export default {
         const editedItem = [];
         for (let i = 0; i < list.length; i++) {
 
+          let locked = null;
+          if (list[i]["SuperOrder"] == null || list[i]["SuperOrder"].length == 0) {
+            locked = lockedItem[i];
+          } else {
+            for (let k = 0; k < lockedItem.length; k++) {
+              if (lockedItem[k]["SuperOrder"] === list[i]["SuperOrder"]) {
+                locked = lockedItem[k];
+                break;
+              }
+            }
+          }
           try {
-            const Size = await this.getSize(lockedItem[i].Style, list[i].color, lockedItem[i]["Size"], list[i].size)
+            const Size = await this.getSize(locked.Style, list[i].color, locked["Size"], list[i].size)
 
 
-            lockedItem[i]["CCurrDueDate"] = this.convertDate(lockedItem[i]["CCurrDueDate"]);
-            lockedItem[i]["CurrDueDate"] = this.convertDate(lockedItem[i]["CurrDueDate"]);
+            locked["CCurrDueDate"] = this.convertDate(locked["CCurrDueDate"]);
+            locked["CurrDueDate"] = this.convertDate(locked["CurrDueDate"]);
 
-            lockedItem[i]["StartDate"] = this.convertDate(lockedItem[i]["StartDate"]);
-            lockedItem[i]["CStartDate"] = this.convertDate(lockedItem[i]["CStartDate"]);
+            locked["StartDate"] = this.convertDate(locked["StartDate"]);
+            locked["CStartDate"] = this.convertDate(locked["CStartDate"]);
 
-            lockedItem[i]["EarliestStartDate"] = this.convertDate(lockedItem[i]["EarliestStartDate"]);
-            lockedItem[i]["DemandDate"] = this.convertDate(lockedItem[i]["DemandDate"]);
-            let Cloned = JSON.parse(JSON.stringify(lockedItem[i]));
+            locked["EarliestStartDate"] = this.convertDate(locked["EarliestStartDate"]);
+            locked["DemandDate"] = this.convertDate(locked["DemandDate"]);
+            let Cloned = JSON.parse(JSON.stringify(locked));
 
 
 
             Cloned["idField"] = "Id";
             Cloned["_defaultId"] = 0;
 
-            if (lockedItem[i]["CCurrDueDate"] == null) {
-              lockedItem[i]["CCurrDueDate"] = lockedItem[i]["CurrDueDate"]
+            if (locked["CCurrDueDate"] == null) {
+              locked["CCurrDueDate"] = locked["CurrDueDate"]
             }
 
-            if (lockedItem[i]["CStartDate"] == null) {
-              lockedItem[i]["CStartDate"] = lockedItem[i]["StartDate"]
+            if (locked["CStartDate"] == null) {
+              locked["CStartDate"] = locked["StartDate"]
             }
 
-            lockedItem[i]["IsEdited"] = true;
-            lockedItem[i]["Cloned"] = Cloned;
-            lockedItem[i]["IsFieldChange"] = true;
-            lockedItem[i]["Completed"] = false;
-            lockedItem[i]["TotalDozens"] = list[i].quatity;
-            lockedItem[i]["SizeShortDes"] = list[i].size;
-            lockedItem[i]["Size"] = Size;
+            locked["IsEdited"] = true;
+            locked["Cloned"] = Cloned;
+            locked["IsFieldChange"] = true;
+            locked["Completed"] = false;
+            locked["TotalDozens"] = list[i].quatity;
+            locked["SizeShortDes"] = list[i].size;
+            locked["Size"] = Size;
 
-            lockedItem[i]["ExpeditePriority"] = list[i].priority;
-            lockedItem[i]["DcLoc"] = list[i].dc;
-            lockedItem[i]["Style"] = list[i].pkg;
-            lockedItem[i]["Revision"] = list[i].revision;
-            lockedItem[i]["Color"] = list[i].color;
+            locked["ExpeditePriority"] = list[i].priority;
+            locked["DcLoc"] = list[i].dc;
+            locked["Style"] = list[i].pkg;
+            locked["Revision"] = list[i].revision;
+            locked["Color"] = list[i].color;
             editedItem.push({
-              item: lockedItem[i],
+              item: locked,
               origin: list[i],
             });
           } catch (e) {
@@ -409,12 +420,14 @@ export default {
           footer: '<a href="">Why do I have this issue?</a>'
         });
 
+
       } else {
         let editedItem = [];
         for (let i = 0; i < list.length; i++) {
 
           try {
 
+            list[i]["SuperOrder"] = lockedItem[i]["SuperOrder"];
             lockedItem[i]["CCurrDueDate"] = this.convertDate(lockedItem[i]["CCurrDueDate"]);
             lockedItem[i]["CurrDueDate"] = this.convertDate(lockedItem[i]["CurrDueDate"]);
 
@@ -431,7 +444,6 @@ export default {
             Cloned["_defaultId"] = 0;
 
 
-          
             if (lockedItem[i]["CCurrDueDate"] == null) {
               lockedItem[i]["CCurrDueDate"] = lockedItem[i]["CurrDueDate"]
             }
@@ -439,7 +451,7 @@ export default {
             if (lockedItem[i]["CStartDate"] == null) {
               lockedItem[i]["CStartDate"] = lockedItem[i]["StartDate"]
             }
-          
+
 
             lockedItem[i]["IsEdited"] = true;
             lockedItem[i]["IsFieldChange"] = true;
@@ -457,7 +469,7 @@ export default {
             lockedItem[i]["Style"] = list[i].pkg;
             lockedItem[i]["Revision"] = list[i].revision;
             lockedItem[i]["Color"] = list[i].color;
-          
+
 
             editedItem.push({
               item: lockedItem[i],
@@ -508,20 +520,6 @@ export default {
             });
 
           }
-
-
-          Swal.fire({
-            position: 'top-end',
-            icon: 'success',
-            title: 'Your work has been saved',
-            showConfirmButton: false,
-            timer: 1500
-          }).then(e => {
-            this.form.style = "";
-            this.list = [];
-            this.showSubmitFeedback = true;
-            this.submitable = true;
-          })
         } catch (error) {
           // Handle errors
           Swal.fire({
@@ -535,6 +533,7 @@ export default {
           this.loading = false;
         }
       }
+
 
     },
     async submit() {
@@ -630,7 +629,7 @@ export default {
           axios.request(config)
             .then(async (response) => {
               await this.filldate(response.data, this.list);
-              this.loading = false;
+              await this.submit();
             })
             .catch((error) => {
               this.loading = false;
@@ -737,7 +736,7 @@ export default {
       <div class="column">
 
         <button type="button" class="button1" v-show="submitable" v-on:click="submit">Fill Data</button>
-        <button type="button" class="button1" v-show="submitable" v-on:click="submitdate">Fill Data & Update Date</button>
+        <button type="button" class="button1" v-show="submitable" v-on:click="submitdate">Fill Data + Update Due Date (Beta)</button>
 
         <b>Total: {{ list.length }} items</b>
         <table class="styled-table">
