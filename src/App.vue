@@ -654,15 +654,20 @@ export default {
 
 <template>
   <header>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link href="https://unpkg.com/nprogress@0.2.0/nprogress.css" rel="stylesheet" />
   </header>
 
-  <h1 class="title is-1" v-text="form.formName"></h1>
-
-
   <div class="columns">
     <form class="example">
+      <div class="row">
+        <img src="./assets/duckdeveloper.png" alt="App Logo" width="100" height="100">
+        <h3 style="color: blue;"><b>Note</b></h3>
+        <ol>
+          <li style="color: red;">Ensure that the cells in the excel file do not contain extra spaces.</li>
+          <li style="color: red;">Create records equal to the number of records found in the excel file.</li>
+          <li style="color: red;">When creating a new record, create the type of color code that has the most Sizes.</li>
+        </ol>
+      </div>
       <div class="row">
         <label for="style_code" class="label">Style Code</label>
         <div class="control">
