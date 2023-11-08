@@ -273,8 +273,10 @@ export default {
 
           let locked = null;
           if (list[i]["SuperOrder"] == null || list[i]["SuperOrder"].length == 0) {
+            console.log("not found super order!!!")
             locked = lockedItem[i];
           } else {
+            console.log("found super order!!!")
             for (let k = 0; k < lockedItem.length; k++) {
               if (lockedItem[k]["SuperOrder"] === list[i]["SuperOrder"]) {
                 locked = lockedItem[k];
@@ -424,67 +426,40 @@ export default {
       } else {
         let editedItem = [];
         for (let i = 0; i < list.length; i++) {
+          list[i]["SuperOrder"] = lockedItem[i]["SuperOrder"];
+          lockedItem[i]["CCurrDueDate"] = this.convertDate(lockedItem[i]["CCurrDueDate"]);
+          lockedItem[i]["CurrDueDate"] = this.convertDate(lockedItem[i]["CurrDueDate"]);
 
-          try {
+          lockedItem[i]["StartDate"] = this.convertDate(lockedItem[i]["StartDate"]);
+          lockedItem[i]["CStartDate"] = this.convertDate(lockedItem[i]["CStartDate"]);
 
-            list[i]["SuperOrder"] = lockedItem[i]["SuperOrder"];
-            lockedItem[i]["CCurrDueDate"] = this.convertDate(lockedItem[i]["CCurrDueDate"]);
-            lockedItem[i]["CurrDueDate"] = this.convertDate(lockedItem[i]["CurrDueDate"]);
+          lockedItem[i]["EarliestStartDate"] = this.convertDate(lockedItem[i]["EarliestStartDate"]);
+          lockedItem[i]["DemandDate"] = this.convertDate(lockedItem[i]["DemandDate"]);
+          const Cloned = JSON.parse(JSON.stringify(lockedItem[i]));
 
-            lockedItem[i]["StartDate"] = this.convertDate(lockedItem[i]["StartDate"]);
-            lockedItem[i]["CStartDate"] = this.convertDate(lockedItem[i]["CStartDate"]);
-
-            lockedItem[i]["EarliestStartDate"] = this.convertDate(lockedItem[i]["EarliestStartDate"]);
-            lockedItem[i]["DemandDate"] = this.convertDate(lockedItem[i]["DemandDate"]);
-            const Cloned = JSON.parse(JSON.stringify(lockedItem[i]));
-
-
-
-            Cloned["idField"] = "Id";
-            Cloned["_defaultId"] = 0;
+          Cloned["idField"] = "Id";
+          Cloned["_defaultId"] = 0;
 
 
-            if (lockedItem[i]["CCurrDueDate"] == null) {
-              lockedItem[i]["CCurrDueDate"] = lockedItem[i]["CurrDueDate"]
-            }
-
-            if (lockedItem[i]["CStartDate"] == null) {
-              lockedItem[i]["CStartDate"] = lockedItem[i]["StartDate"]
-            }
-
-
-            lockedItem[i]["IsEdited"] = true;
-            lockedItem[i]["IsFieldChange"] = true;
-            lockedItem[i]["Completed"] = false;
-            lockedItem[i]["Cloned"] = Cloned;
-
-
-            lockedItem[i]["CurrDueDate"] = list[i].duedate.toISOString();
-            lockedItem[i]["TotalDozens"] = list[i].quatity;
-            lockedItem[i]["SizeShortDes"] = list[i].size;
-            lockedItem[i]["Size"] = Size;
-
-            lockedItem[i]["ExpeditePriority"] = list[i].priority;
-            lockedItem[i]["DcLoc"] = list[i].dc;
-            lockedItem[i]["Style"] = list[i].pkg;
-            lockedItem[i]["Revision"] = list[i].revision;
-            lockedItem[i]["Color"] = list[i].color;
-
-
-            editedItem.push({
-              item: lockedItem[i],
-              origin: list[i],
-            });
-          } catch (e) {
-            Swal.fire({
-              icon: 'error',
-              title: 'Oops...',
-              text: e,
-              footer: '<a href="">Why do I have this issue?</a>'
-            });
-            return;
+          if (lockedItem[i]["CCurrDueDate"] == null) {
+            lockedItem[i]["CCurrDueDate"] = lockedItem[i]["CurrDueDate"]
           }
 
+          if (lockedItem[i]["CStartDate"] == null) {
+            lockedItem[i]["CStartDate"] = lockedItem[i]["StartDate"]
+          }
+
+
+          lockedItem[i]["IsEdited"] = true;
+          lockedItem[i]["IsFieldChange"] = true;
+          lockedItem[i]["Completed"] = false;
+          lockedItem[i]["Cloned"] = Cloned;
+          lockedItem[i]["CurrDueDate"] = list[i].duedate.toISOString();
+
+          editedItem.push({
+            item: lockedItem[i],
+            origin: list[i],
+          });
 
         }
 
@@ -504,33 +479,20 @@ export default {
           }
         };
         this.listFail = [];
-        this.loading = true;
-        try {
-          for (let i = 0; i < editedItem.length; i++) {
-            axios.post('http://wsisswebprod1v/ISS/Order/SaveWOMdata', {
-              "data": [editedItem[i].item],
-              "mode": "EditPFSUngroup"
-            }, config).then(res => {
-              console.log(res.data);
-              if (res.data["Status"] === false) {
-                this.listFail.push(editedItem[i].origin);
-              }
-            }).catch(e => {
-              this.listFail.push(editedItem[i].origin);
-            });
 
-          }
-        } catch (error) {
-          // Handle errors
-          Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            footer: '<a href="">Why do I have this issue?</a>'
-          }).then(e => {
-            this.submitable = true;
+        for (let i = 0; i < editedItem.length; i++) {
+          axios.post('http://wsisswebprod1v/ISS/Order/SaveWOMdata', {
+            "data": [editedItem[i].item],
+            "mode": "EditPFSUngroup"
+          }, config).then(res => {
+
+            if (res.data["Status"] === false) {
+              this.listFail.push(editedItem[i].origin);
+            }
+          }).catch(e => {
+            this.listFail.push(editedItem[i].origin);
           });
-        } finally {
-          this.loading = false;
+
         }
       }
 
@@ -547,49 +509,51 @@ export default {
         confirmButtonText: "Yes, I'm sure!"
       }).then((result) => {
         if (result.isConfirmed) {
-
-          this.submitable = false;
-          let data = 'sort=&group=&filter=&SuperOrder=&StyleType=Selling+Style&SStyle=' + this.form.style + '&SColor=&SAttribute=&SSize=&DC=&Rev=&MfgPathId=95&Rule=&GroupId=&MFGPlant=&CylinderSize=&DyeBle=&TextileGroup=&Alt=&Machine=&Yarn=&DueDate=Earliest+Start&Week_input=Current+%2B+Prior+Week&Week=Current+%2B+Prior+Week&MoreWeeks_input=52&MoreWeeks=52&BOMMismatches=false&Fabric=&SuggestedLots=true&SpillOver=true&LockedLots=true&ReleasedLotsThisWeek=true&CustomerOrders=true&Events=true&MaxBuild=true&TILs=true&Forecast=false&StockTarget=true&Planner=&WorkCenter=&CapacityGroup=&CorpDiv=&BusinessUnit=&Src=A';
-
-          let config = {
-            method: 'post',
-            url: 'http://wsisswebprod1v/ISS/Order/WOManagement',
-            headers: {
-              'Accept': '*/*',
-              'Accept-Language': 'en-US,en;q=0.9',
-              'Connection': 'keep-alive',
-              'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-              'Cookie': 'menustate=false',
-              'Origin': 'http://wsisswebprod1v',
-              'Referer': 'http://wsisswebprod1v/ISS/Order/WOManagement',
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
-              'X-Requested-With': 'XMLHttpRequest',
-              'Access-Control-Allow-Origin': '*'
-            },
-            data: data
-          };
-          this.loading = true;
-
-          axios.request(config)
-            .then(async (response) => {
-              await this.filldata(response.data, this.list);
-              this.loading = false;
-            })
-            .catch((error) => {
-              this.loading = false;
-              Swal.fire({
-                icon: 'error',
-                title: 'Oops...',
-                text: error.message,
-                footer: '<a href="">Why do I have this issue?</a>'
-              });
-            });
-
+          this.startFillData();
         }
       })
 
 
 
+
+    },
+    startFillData() {
+      this.submitable = false;
+      let data = 'sort=&group=&filter=&SuperOrder=&StyleType=Selling+Style&SStyle=' + this.form.style + '&SColor=&SAttribute=&SSize=&DC=&Rev=&MfgPathId=95&Rule=&GroupId=&MFGPlant=&CylinderSize=&DyeBle=&TextileGroup=&Alt=&Machine=&Yarn=&DueDate=Earliest+Start&Week_input=Current+%2B+Prior+Week&Week=Current+%2B+Prior+Week&MoreWeeks_input=52&MoreWeeks=52&BOMMismatches=false&Fabric=&SuggestedLots=true&SpillOver=true&LockedLots=true&ReleasedLotsThisWeek=true&CustomerOrders=true&Events=true&MaxBuild=true&TILs=true&Forecast=false&StockTarget=true&Planner=&WorkCenter=&CapacityGroup=&CorpDiv=&BusinessUnit=&Src=A';
+
+      let config = {
+        method: 'post',
+        url: 'http://wsisswebprod1v/ISS/Order/WOManagement',
+        headers: {
+          'Accept': '*/*',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Connection': 'keep-alive',
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          'Cookie': 'menustate=false',
+          'Origin': 'http://wsisswebprod1v',
+          'Referer': 'http://wsisswebprod1v/ISS/Order/WOManagement',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Access-Control-Allow-Origin': '*'
+        },
+        data: data
+      };
+      this.loading = true;
+
+      axios.request(config)
+        .then(async (response) => {
+          await this.filldata(response.data, this.list);
+          this.loading = false;
+        })
+        .catch((error) => {
+          this.loading = false;
+          Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: error.message,
+            footer: '<a href="">Why do I have this issue?</a>'
+          });
+        });
 
     },
     async submitdate() {
@@ -629,7 +593,7 @@ export default {
           axios.request(config)
             .then(async (response) => {
               await this.filldate(response.data, this.list);
-              await this.submit();
+              await this.startFillData();
             })
             .catch((error) => {
               this.loading = false;
@@ -741,7 +705,8 @@ export default {
       <div class="column">
 
         <button type="button" class="button1" v-show="submitable" v-on:click="submit">Fill Data</button>
-        <button type="button" class="button1" v-show="submitable" v-on:click="submitdate">Fill Data + Update Due Date (Beta)</button>
+        <button type="button" class="button1" v-show="submitable" v-on:click="submitdate">Fill Data + Update Due Date
+          (Beta)</button>
 
         <b>Total: {{ list.length }} items</b>
         <table class="styled-table">
@@ -794,8 +759,9 @@ export default {
     </transition>
   </div>
 
-  <div class="vl-parent">
-    <loading v-model:active="isLoading" :can-cancel="false" :is-full-page="true" />
+
+  <div>
+    <square v-bind:loading="isLoading"></square>
   </div>
 </template>
 
