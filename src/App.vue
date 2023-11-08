@@ -96,7 +96,6 @@ export default {
       return (new Date(utc)).toISOString();
     },
     async fakeSubmit() {
-      console.log("on search");
       this.listFail = [];
       const xlsxfile = this.$refs.file.files[0];
 
@@ -134,10 +133,10 @@ export default {
 
       this.list = [];
       this.isLoading = true;
-      let range = XLSX.utils.decode_range(ws['!ref']);
 
 
       try {
+        let range = XLSX.utils.decode_range(ws['!ref']);
         for (let i = 0; i <= range.e.r + 1; i++) {
           if (ws["D" + i] != null && ws["D" + i].v === this.form.style) {
             if (ws["Q" + i] != null && ws["Q" + i].v != null) {
