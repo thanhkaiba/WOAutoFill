@@ -273,10 +273,8 @@ export default {
 
           let locked = null;
           if (list[i]["SuperOrder"] == null || list[i]["SuperOrder"].length == 0) {
-            console.log("not found super order!!!")
             locked = lockedItem[i];
           } else {
-            console.log("found super order!!!")
             for (let k = 0; k < lockedItem.length; k++) {
               if (lockedItem[k]["SuperOrder"] === list[i]["SuperOrder"]) {
                 locked = lockedItem[k];
