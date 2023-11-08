@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx';
 import axios from 'axios'
 import * as Swal from 'sweetalert2'
 import Loading from 'vue-loading-overlay';
+
 import 'vue-loading-overlay/dist/css/index.css';
 export default {
   data() {
@@ -132,7 +133,7 @@ export default {
       }
 
       this.list = [];
-      this.loading = true;
+      this.isLoading = true;
       let range = XLSX.utils.decode_range(ws['!ref']);
 
 
@@ -218,8 +219,7 @@ export default {
           }
         }
       } catch (e) {
-        console.log(e);
-        this.loading = false;
+        this.isLoading = false;
         if (this.list.length === 0) {
           Swal.fire({
             icon: 'error',
@@ -232,7 +232,7 @@ export default {
 
       }
 
-      this.loading = false;
+      this.isLoading = false;
       if (this.list.length === 0) {
         Swal.fire({
           icon: 'error',
@@ -356,7 +356,6 @@ export default {
           }
         };
         this.listFail = [];
-        this.loading = true;
         try {
           for (let i = 0; i < editedItem.length; i++) {
             axios.post('http://wsisswebprod1v/ISS/Order/SaveWOMdata', {
@@ -395,9 +394,7 @@ export default {
           }).then(e => {
             this.submitable = true;
           });
-        } finally {
-          this.loading = false;
-        }
+        } 
       }
 
     },
@@ -536,15 +533,13 @@ export default {
         },
         data: data
       };
-      this.loading = true;
+      
 
       axios.request(config)
         .then(async (response) => {
           await this.filldata(response.data, this.list);
-          this.loading = false;
         })
         .catch((error) => {
-          this.loading = false;
           Swal.fire({
             icon: 'error',
             title: 'Oops...',
@@ -565,7 +560,7 @@ export default {
         confirmButtonText: "Yes, I'm sure!"
       }).then((result) => {
         if (result.isConfirmed) {
-
+          this.isLoading = true;
           this.submitable = false;
           let data = 'sort=&group=&filter=&SuperOrder=&StyleType=Selling+Style&SStyle=' + this.form.style + '&SColor=&SAttribute=&SSize=&DC=&Rev=&MfgPathId=95&Rule=&GroupId=&MFGPlant=&CylinderSize=&DyeBle=&TextileGroup=&Alt=&Machine=&Yarn=&DueDate=Earliest+Start&Week_input=Current+%2B+Prior+Week&Week=Current+%2B+Prior+Week&MoreWeeks_input=52&MoreWeeks=52&BOMMismatches=false&Fabric=&SuggestedLots=true&SpillOver=true&LockedLots=true&ReleasedLotsThisWeek=true&CustomerOrders=true&Events=true&MaxBuild=true&TILs=true&Forecast=false&StockTarget=true&Planner=&WorkCenter=&CapacityGroup=&CorpDiv=&BusinessUnit=&Src=A';
 
@@ -586,21 +581,22 @@ export default {
             },
             data: data
           };
-          this.loading = true;
+        
 
           axios.request(config)
             .then(async (response) => {
               await this.filldate(response.data, this.list);
-              await this.startFillData();
+              this.startFillData();
             })
             .catch((error) => {
-              this.loading = false;
               Swal.fire({
                 icon: 'error',
                 title: 'Oops...',
                 text: error.message,
                 footer: '<a href="">Why do I have this issue?</a>'
               });
+            }).finally(() => {
+              this.isLoading = false;
             });
 
         }
@@ -701,10 +697,7 @@ export default {
 
     <transition name="fade" mode="out-in" v-show="showSubmitFeedback && listFail.length <= 0">
       <div class="column">
-
-        <button type="button" class="button1" v-show="submitable" v-on:click="submit">Fill Data</button>
-        <button type="button" class="button1" v-show="submitable" v-on:click="submitdate">Fill Data + Update Due Date
-          (Beta)</button>
+        <button type="button" class="button1" v-show="submitable" v-on:click="submitdate">Fill Data</button>
 
         <b>Total: {{ list.length }} items</b>
         <table class="styled-table">
@@ -758,9 +751,9 @@ export default {
   </div>
 
 
-  <div>
-    <square v-bind:loading="isLoading"></square>
-  </div>
+  <loading v-model:active="isLoading"
+                 :can-cancel="false"
+                 :is-full-page="true"/>
 </template>
 
 <style scoped>
