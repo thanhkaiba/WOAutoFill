@@ -15,6 +15,7 @@ export default {
 
         style: ""
       },
+      fillPkgFirst: false,
       list: [],
       listFail: [],
       submitable: true,
@@ -24,7 +25,7 @@ export default {
     }
   },
   components: {
-    Loading
+    Loading,
   },
   methods: {
     async getSize(style, color, size, SizeDesc) {
@@ -94,6 +95,65 @@ export default {
       const configDate = new Date(dateStr);
       const utc = Date.UTC(configDate.getFullYear(), configDate.getMonth(), configDate.getDate(), 4, 0, 0, 0);
       return (new Date(utc)).toISOString();
+    },
+    async fillAll() {
+      const xlsxfile = this.$refs.file.files[0];
+
+      if (xlsxfile == null) {
+        Swal.fire(
+          'The XLSX file?',
+          'Please xlsx file!',
+          'question'
+        );
+        return;
+      }
+
+      let ws;
+      try {
+        const workbook = XLSX.read(await xlsxfile.arrayBuffer(), { type: 'binary' });
+        ws = workbook.Sheets[this.sheet];
+      } catch (e) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Oops...',
+          text: 'Something went wrong!' + e.message,
+          footer: '<a href="">Why do I have this issue?</a>'
+        })
+        return;
+      }
+
+
+      let styleList = new Set();
+      let range = XLSX.utils.decode_range(ws['!ref']);
+      for (let i = 0; i <= range.e.r + 1; i++) {
+        if (ws["D" + i] != null && ws["D" + i].v.length > 0) {
+          const style = ws["D" + i].v;
+          styleList.add(style);
+
+        }
+      }
+      console.log(styleList.size);
+
+      for (let s of styleList) {
+        try {
+          console.log(s);
+          this.form.style = s;
+          await this.fakeSubmit();
+          await this.submitdate();
+          console.log("DONE");
+        } catch (e) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Fill fail with style ' + this.form.style,
+            text: e,
+            footer: '<a href="">Why do I have this issue?</a>'
+          });
+        } finally {
+          this.form.style = "";
+        }
+      }
+
+
     },
     async fakeSubmit() {
       this.listFail = [];
@@ -393,7 +453,132 @@ export default {
           }).then(e => {
             this.submitable = true;
           });
-        } 
+        }
+      }
+
+    },
+    async filldataWithOrder(searchData, list) {
+      let lockedItem = [];
+
+      for (let i = 0; i < searchData["Total"]; i++) {
+
+        if (searchData["Data"][i]["OrderStatusDesc"] === "Locked") {
+          lockedItem.push(searchData["Data"][i]);
+        }
+      }
+
+
+      if (lockedItem.length < list.length) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Oops...',
+          text: 'Not enough locked item for style ' + this.form.style + ' !',
+          footer: '<a href="">Why do I have this issue?</a>'
+        });
+      } else {
+        const editedItem = [];
+        for (let i = 0; i < list.length; i++) {
+
+          let locked = null;
+          if (list[i]["SuperOrder"] == null || list[i]["SuperOrder"].length == 0) {
+            locked = lockedItem[i];
+          } else {
+            for (let k = 0; k < lockedItem.length; k++) {
+              if (lockedItem[k]["SuperOrder"] === list[i]["SuperOrder"]) {
+                locked = lockedItem[k];
+                break;
+              }
+            }
+          }
+          try {
+            locked = JSON.parse(JSON.stringify(locked));
+
+            locked["CCurrDueDate"] = this.convertDate(locked["CCurrDueDate"]);
+            locked["CurrDueDate"] = this.convertDate(locked["CurrDueDate"]);
+
+            locked["StartDate"] = this.convertDate(locked["StartDate"]);
+            locked["CStartDate"] = this.convertDate(locked["CStartDate"]);
+
+            locked["EarliestStartDate"] = this.convertDate(locked["EarliestStartDate"]);
+            locked["DemandDate"] = this.convertDate(locked["DemandDate"]);
+            let Cloned = JSON.parse(JSON.stringify(locked));
+
+
+
+            Cloned["idField"] = "Id";
+            Cloned["_defaultId"] = 0;
+
+            if (locked["CCurrDueDate"] == null) {
+              locked["CCurrDueDate"] = locked["CurrDueDate"]
+            }
+
+            if (locked["CStartDate"] == null) {
+              locked["CStartDate"] = locked["StartDate"]
+            }
+
+            locked["IsEdited"] = true;
+            locked["Cloned"] = Cloned;
+            locked["IsFieldChange"] = true;
+            locked["Completed"] = false;
+
+            locked["Style"] = list[i].pkg;
+            locked["Revision"] = list[i].revision;
+            editedItem.push({
+              item: locked,
+              origin: list[i],
+            });
+          } catch (e) {
+            Swal.fire({
+              icon: 'error',
+              title: 'Oops...',
+              text: e,
+              footer: '<a href="">Why do I have this issue?</a>'
+            });
+            return;
+          }
+        }
+
+
+        const config = {
+          method: 'post',
+          headers: {
+            'Accept': 'application/json, text/javascript, */*; q=0.01',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Connection': 'keep-alive',
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Cookie': 'menustate=false',
+            'Origin': 'http://wsisswebprod1v',
+            'Referer': 'http://wsisswebprod1v/ISS/Order/WOManagement',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        };
+        try {
+          for (let i = 0; i < editedItem.length; i++) {
+            axios.post('http://wsisswebprod1v/ISS/Order/SaveWOMdata', {
+              "data": [editedItem[i].item],
+              "mode": "Recalc"
+            }, config).then(res => {
+              console.log(res.data);
+              if (res.data["Status"] === false) {
+              }
+            }).catch(e => {
+            });
+
+          }
+
+          await this.filldata(searchData, list)
+
+        } catch (error) {
+          // Handle errors
+          Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            footer: '<a href="">Why do I have this issue?</a>'
+          }).then(e => {
+            this.submitable = true;
+          });
+        }
       }
 
     },
@@ -501,9 +686,9 @@ export default {
         confirmButtonColor: '#3085d6',
         cancelButtonColor: '#d33',
         confirmButtonText: "Yes, I'm sure!"
-      }).then((result) => {
+      }).then(async (result) => {
         if (result.isConfirmed) {
-          this.startFillData();
+          await this.startFillData();
         }
       })
 
@@ -511,7 +696,7 @@ export default {
 
 
     },
-    startFillData() {
+    async startFillData() {
       this.submitable = false;
       let data = 'sort=&group=&filter=&SuperOrder=&StyleType=Selling+Style&SStyle=' + this.form.style + '&SColor=&SAttribute=&SSize=&DC=&Rev=&MfgPathId=95&Rule=&GroupId=&MFGPlant=&CylinderSize=&DyeBle=&TextileGroup=&Alt=&Machine=&Yarn=&DueDate=Earliest+Start&Week_input=Current+%2B+Prior+Week&Week=Current+%2B+Prior+Week&MoreWeeks_input=52&MoreWeeks=52&BOMMismatches=false&Fabric=&SuggestedLots=true&SpillOver=true&LockedLots=true&ReleasedLotsThisWeek=true&CustomerOrders=true&Events=true&MaxBuild=true&TILs=true&Forecast=false&StockTarget=true&Planner=&WorkCenter=&CapacityGroup=&CorpDiv=&BusinessUnit=&Src=A';
 
@@ -532,11 +717,15 @@ export default {
         },
         data: data
       };
-      
+
 
       axios.request(config)
         .then(async (response) => {
-          await this.filldata(response.data, this.list);
+          if (this.form.fillPkgFirst) {
+            await this.filldataWithOrder(response.data, this.list);
+          } else {
+            await this.filldata(response.data, this.list);
+          }
         })
         .catch((error) => {
           Swal.fire({
@@ -549,57 +738,44 @@ export default {
 
     },
     async submitdate() {
-      Swal.fire({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: "Yes, I'm sure!"
-      }).then((result) => {
-        if (result.isConfirmed) {
-          this.isLoading = true;
-          this.submitable = false;
-          let data = 'sort=&group=&filter=&SuperOrder=&StyleType=Selling+Style&SStyle=' + this.form.style + '&SColor=&SAttribute=&SSize=&DC=&Rev=&MfgPathId=95&Rule=&GroupId=&MFGPlant=&CylinderSize=&DyeBle=&TextileGroup=&Alt=&Machine=&Yarn=&DueDate=Earliest+Start&Week_input=Current+%2B+Prior+Week&Week=Current+%2B+Prior+Week&MoreWeeks_input=52&MoreWeeks=52&BOMMismatches=false&Fabric=&SuggestedLots=true&SpillOver=true&LockedLots=true&ReleasedLotsThisWeek=true&CustomerOrders=true&Events=true&MaxBuild=true&TILs=true&Forecast=false&StockTarget=true&Planner=&WorkCenter=&CapacityGroup=&CorpDiv=&BusinessUnit=&Src=A';
+      this.isLoading = true;
+      this.submitable = false;
+      let data = 'sort=&group=&filter=&SuperOrder=&StyleType=Selling+Style&SStyle=' + this.form.style + '&SColor=&SAttribute=&SSize=&DC=&Rev=&MfgPathId=95&Rule=&GroupId=&MFGPlant=&CylinderSize=&DyeBle=&TextileGroup=&Alt=&Machine=&Yarn=&DueDate=Earliest+Start&Week_input=Current+%2B+Prior+Week&Week=Current+%2B+Prior+Week&MoreWeeks_input=52&MoreWeeks=52&BOMMismatches=false&Fabric=&SuggestedLots=true&SpillOver=true&LockedLots=true&ReleasedLotsThisWeek=true&CustomerOrders=true&Events=true&MaxBuild=true&TILs=true&Forecast=false&StockTarget=true&Planner=&WorkCenter=&CapacityGroup=&CorpDiv=&BusinessUnit=&Src=A';
 
-          let config = {
-            method: 'post',
-            url: 'http://wsisswebprod1v/ISS/Order/WOManagement',
-            headers: {
-              'Accept': '*/*',
-              'Accept-Language': 'en-US,en;q=0.9',
-              'Connection': 'keep-alive',
-              'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-              'Cookie': 'menustate=false',
-              'Origin': 'http://wsisswebprod1v',
-              'Referer': 'http://wsisswebprod1v/ISS/Order/WOManagement',
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
-              'X-Requested-With': 'XMLHttpRequest',
-              'Access-Control-Allow-Origin': '*'
-            },
-            data: data
-          };
-        
+      let config = {
+        method: 'post',
+        url: 'http://wsisswebprod1v/ISS/Order/WOManagement',
+        headers: {
+          'Accept': '*/*',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Connection': 'keep-alive',
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          'Cookie': 'menustate=false',
+          'Origin': 'http://wsisswebprod1v',
+          'Referer': 'http://wsisswebprod1v/ISS/Order/WOManagement',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Access-Control-Allow-Origin': '*'
+        },
+        data: data
+      };
 
-          axios.request(config)
-            .then(async (response) => {
-              await this.filldate(response.data, this.list);
-              this.startFillData();
-            })
-            .catch((error) => {
-              Swal.fire({
-                icon: 'error',
-                title: 'Oops...',
-                text: error.message,
-                footer: '<a href="">Why do I have this issue?</a>'
-              });
-            }).finally(() => {
-              this.isLoading = false;
-            });
 
-        }
-      })
+      axios.request(config)
+        .then(async (response) => {
+          await this.filldate(response.data, this.list);
+          await this.startFillData();
+        })
+        .catch((error) => {
+          Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: error.message,
+            footer: '<a href="">Why do I have this issue?</a>'
+          });
+        }).finally(() => {
+          this.isLoading = false;
+        });
 
 
 
@@ -639,7 +815,14 @@ export default {
         </div>
       </div>
 
+      <div class="custom-checkbox">
+        <input type="checkbox" id="checkbox" v-model="form.fillPkgFirst" />
+        <label for="checkbox">Fill PKG and Revision First</label>
+      </div>
+
+
       <button type="submit" @click.prevent="fakeSubmit"><i class="fa fa-search">Search</i></button>
+      <button type="submit" @click.prevent="fillAll"><i class="fa fa-search">Fill All(Beta)</i></button>
 
     </form>
 
@@ -748,14 +931,31 @@ export default {
       </div>
     </transition>
   </div>
-
-
-  <loading v-model:active="isLoading"
-                 :can-cancel="false"
-                 :is-full-page="true"/>
+  <loading v-model:active="isLoading" :can-cancel="false" :is-full-page="true" />
 </template>
 
+<style src="@vueform/multiselect/themes/default.css"></style>
 <style scoped>
+.custom-checkbox input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  border-radius: 50%;
+  border: 2px solid #fb0909;
+  margin-bottom: -3px;
+  margin-right: 5px;
+}
+
+.custom-checkbox input[type="checkbox"]:checked {
+  background-color: #999;
+}
+
+.custom-checkbox label {
+  color: #fb0909;
+}
+
 .margin-bottom {
   margin-bottom: 15px;
 }
