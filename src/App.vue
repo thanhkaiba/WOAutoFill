@@ -12,9 +12,10 @@ export default {
     return {
       form: {
         formName: "Auto Fill Data",
-
+        url: "",
         style: ""
       },
+
       fillPkgFirst: false,
       list: [],
       listFail: [],
@@ -408,8 +409,8 @@ export default {
             'Connection': 'keep-alive',
             'Content-Type': 'application/json; charset=UTF-8',
             'Cookie': 'menustate=false',
-            'Origin': 'http://wsisswebprod1v',
-            'Referer': 'http://wsisswebprod1v/ISS/Order/WOManagement',
+            'Origin': 'http://wsscplanprd05',
+            'Referer': 'http://wsscplanprd05/ISS/Order/WOManagement',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
             'X-Requested-With': 'XMLHttpRequest'
           }
@@ -417,7 +418,7 @@ export default {
         this.listFail = [];
         try {
           for (let i = 0; i < editedItem.length; i++) {
-            axios.post('http://wsisswebprod1v/ISS/Order/SaveWOMdata', {
+            axios.post('http://wsscplanprd05/ISS/Order/SaveWOMdata', {
               "data": [editedItem[i].item],
               "mode": "Recalc"
             }, config).then(res => {
@@ -547,20 +548,21 @@ export default {
             'Connection': 'keep-alive',
             'Content-Type': 'application/json; charset=UTF-8',
             'Cookie': 'menustate=false',
-            'Origin': 'http://wsisswebprod1v',
-            'Referer': 'http://wsisswebprod1v/ISS/Order/WOManagement',
+            'Origin': 'http://wsscplanprd05',
+            'Referer': 'http://wsscplanprd05/ISS/Order/WOManagement',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
             'X-Requested-With': 'XMLHttpRequest'
           }
         };
         try {
           for (let i = 0; i < editedItem.length; i++) {
-            axios.post('http://wsisswebprod1v/ISS/Order/SaveWOMdata', {
+            axios.post('http://wsscplanprd05/ISS/Order/SaveWOMdata', {
               "data": [editedItem[i].item],
               "mode": "Recalc"
             }, config).then(res => {
-              console.log(res.data);
               if (res.data["Status"] === false) {
+                console.log("fill with order fail");
+                console.log(res.data);
               }
             }).catch(e => {
             });
@@ -651,8 +653,8 @@ export default {
             'Connection': 'keep-alive',
             'Content-Type': 'application/json; charset=UTF-8',
             'Cookie': 'menustate=false',
-            'Origin': 'http://wsisswebprod1v',
-            'Referer': 'http://wsisswebprod1v/ISS/Order/WOManagement',
+            'Origin': 'http://wsscplanprd05',
+            'Referer': 'http://wsscplanprd05/ISS/Order/WOManagement',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
             'X-Requested-With': 'XMLHttpRequest'
           }
@@ -660,7 +662,7 @@ export default {
         this.listFail = [];
 
         for (let i = 0; i < editedItem.length; i++) {
-          axios.post('http://wsisswebprod1v/ISS/Order/SaveWOMdata', {
+          axios.post('http://wsscplanprd05/ISS/Order/SaveWOMdata', {
             "data": [editedItem[i].item],
             "mode": "EditPFSUngroup"
           }, config).then(res => {
@@ -702,15 +704,15 @@ export default {
 
       let config = {
         method: 'post',
-        url: 'http://wsisswebprod1v/ISS/Order/WOManagement',
+        url: 'http://wsscplanprd05/ISS/Order/WOManagement',
         headers: {
           'Accept': '*/*',
           'Accept-Language': 'en-US,en;q=0.9',
           'Connection': 'keep-alive',
           'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
           'Cookie': 'menustate=false',
-          'Origin': 'http://wsisswebprod1v',
-          'Referer': 'http://wsisswebprod1v/ISS/Order/WOManagement',
+          'Origin': 'http://wsscplanprd05',
+          'Referer': 'http://wsscplanprd05/ISS/Order/WOManagement',
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
           'X-Requested-With': 'XMLHttpRequest',
           'Access-Control-Allow-Origin': '*'
@@ -744,15 +746,15 @@ export default {
 
       let config = {
         method: 'post',
-        url: 'http://wsisswebprod1v/ISS/Order/WOManagement',
+        url: 'http://wsscplanprd05/ISS/Order/WOManagement',
         headers: {
           'Accept': '*/*',
           'Accept-Language': 'en-US,en;q=0.9',
           'Connection': 'keep-alive',
           'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
           'Cookie': 'menustate=false',
-          'Origin': 'http://wsisswebprod1v',
-          'Referer': 'http://wsisswebprod1v/ISS/Order/WOManagement',
+          'Origin': 'http://wsscplanprd05',
+          'Referer': 'http://wsscplanprd05/ISS/Order/WOManagement',
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
           'X-Requested-With': 'XMLHttpRequest',
           'Access-Control-Allow-Origin': '*'
